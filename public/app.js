@@ -701,7 +701,7 @@ function helpCenterHTML() {
   const items = lang === "ja" ? [
     ["はじめに", "yytblueはどのようなサービスですか？", "投稿、画像・音声の共有、質問箱、ゲーム、交友関係などを楽しめるマイクロブログです。設定から言語や表示テーマも選べます。"],
     ["投稿", "ポスト、返信、リポスト、引用リポストの違いは？", "ポストは通常の投稿、返信は投稿への返答です。リポストは投稿を共有し、引用リポストでは自分のコメントを添えて共有できます。"],
-    ["画像・音声・動画", "画像、音声、動画を投稿できますか？", "画像は最大4枚、音声は録音または音声ファイルから1件追加できます。PDF、Word、Excel、PowerPointなどの文書は最大4件、1件10MBまで添付できます。YouTube、ニコニコ動画、VimeoはURLを入力すると投稿内で再生できます。音声はほかのファイルと同時には追加できません。"],
+    ["画像・音声・動画", "画像、音声、動画を投稿できますか？", "画像は最大4枚、音声は録音または音声ファイルから1件追加できます。PDF、Word、Excel、PowerPointなどの文書は最大4件、1件10MBまで添付できます。YouTube、ニコニコ動画、Vimeo、BilibiliはURLを入力すると投稿内で再生できます。音声はほかのファイルと同時には追加できません。"],
     ["PWA", "アプリとしてホーム画面に追加するには？", "設定の「yytblueをアプリとして使う」から案内を確認できます。対応ブラウザではインストールボタンを使えます。iPhoneではSafariの共有メニューから「ホーム画面に追加」を選択してください。"],
     ["アカウント", "プロフィールと公開範囲を変更するには？", "プロフィール画面で表示名、ユーザー名、自己紹介、MBTIを編集できます。設定ではアカウントを非公開に切り替えられます。ユーザー名は重複できません。"],
     ["検索", "都道府県や政令指定都市を検索できますか？", "できます。都道府県名や政令指定都市名を検索すると、地域案内と公式サイトへのリンクが表示されます。"],
@@ -713,7 +713,7 @@ function helpCenterHTML() {
   ] : [
     ["Getting started", "What is yytblue?", "yytblue is a microblog for posts, image and audio sharing, questions, games, and personal relationships. You can also choose a language and theme in Settings."],
     ["Posting", "How do posts, replies, reposts, and quote reposts differ?", "A post is a regular update. A reply responds to a post. A repost shares it, while a quote repost shares it with your own comment."],
-    ["Media", "Can I post images, audio, or embedded videos?", "You can add up to four images, one audio recording or audio file, up to four PDF, Word, Excel, PowerPoint, or other supported documents of 10 MB each, or embed a YouTube, Niconico, or Vimeo video by entering its URL. Audio cannot be combined with other files."],
+    ["Media", "Can I post images, audio, or embedded videos?", "You can add up to four images, one audio recording or audio file, up to four PDF, Word, Excel, PowerPoint, or other supported documents of 10 MB each, or embed a YouTube, Niconico, Vimeo, or Bilibili video by entering its URL. Audio cannot be combined with other files."],
     ["PWA", "How do I add yytblue to my home screen?", "See the guide under Use yytblue as an app in Settings. On supported browsers, use Install app. On iPhone, use Safari Share, then Add to Home Screen."],
     ["Account", "How do I change my profile or privacy?", "Edit your name, username, bio, and MBTI from Profile. Set your account to private in Settings. Usernames must be unique."],
     ["Search", "Can I search prefectures and designated cities?", "Yes. Searching a prefecture or designated city shows a regional guide and a link to its official website."],
@@ -887,7 +887,7 @@ function applyLanguage() {
   $("#add-youtube").setAttribute("aria-label", $("#add-youtube").title);
   $("#add-youtube span:last-child").textContent = marketText("動画", "Video");
   $("#youtube-dialog-title").textContent = marketText("動画を埋め込む", "Embed a video");
-  $("#youtube-dialog-help").textContent = marketText("YouTube、ニコニコ動画、VimeoのURLを入力してください。", "Enter a YouTube, Niconico, or Vimeo URL.");
+  $("#youtube-dialog-help").textContent = marketText("YouTube、ニコニコ動画、Vimeo、BilibiliのURLを入力してください。", "Enter a YouTube, Niconico, Vimeo, or Bilibili URL.");
   $("#youtube-add-button").textContent = marketText("追加する", "Add video");
   $("#remove-poll").setAttribute("aria-label", tr("removePoll"));
   document
@@ -1602,6 +1602,15 @@ function videoFromUrl(value) {
       const nicoId = url.pathname.split("/").filter(Boolean).find((part) => /^(sm|so|nm)\d{1,12}$/.test(part));
       if (nicoId) return { provider: "niconico", id: nicoId };
     }
+    if (["bilibili.com", "m.bilibili.com", "player.bilibili.com"].includes(host)) {
+      const parts = url.pathname.split("/").filter(Boolean);
+      const pathId = parts.find((part) => /^BV[0-9A-Za-z]{10}$/.test(part) || /^av\d{1,14}$/i.test(part));
+      const queryBvid = url.searchParams.get("bvid") || "";
+      const queryAid = url.searchParams.get("aid") || "";
+      if (pathId) return { provider: "bilibili", id: pathId };
+      if (/^BV[0-9A-Za-z]{10}$/.test(queryBvid)) return { provider: "bilibili", id: queryBvid };
+      if (/^\d{1,14}$/.test(queryAid)) return { provider: "bilibili", id: `av${queryAid}` };
+    }
     return null;
   } catch { return null; }
 }
@@ -1612,6 +1621,7 @@ function videoHTML(video) {
     youtube: { test: /^[A-Za-z0-9_-]{11}$/, src: `https://www.youtube-nocookie.com/embed/${video.id}`, title: "YouTube" },
     vimeo: { test: /^\d{5,12}$/, src: `https://player.vimeo.com/video/${video.id}`, title: "Vimeo" },
     niconico: { test: /^(sm|so|nm)\d{1,12}$/, src: `https://embed.nicovideo.jp/watch/${video.id}`, title: marketText("ニコニコ動画", "Niconico") },
+    bilibili: { test: /^(BV[0-9A-Za-z]{10}|av\d{1,14})$/i, src: `https://player.bilibili.com/player.html?${/^BV/.test(video.id) ? "bvid" : "aid"}=${video.id.replace(/^av/i, "")}`, title: "Bilibili" },
   };
   const config = configs[video.provider];
   return config?.test.test(video.id) ? `<div class="youtube-embed video-embed ${video.provider}"><iframe src="${config.src}" title="${config.title}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>` : "";
