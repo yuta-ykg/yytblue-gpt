@@ -184,6 +184,10 @@ header {
   padding: 0 28px;
   border-bottom: 1px solid var(--line);
 }
+.drawer-trigger { display: none; width: 42px; height: 42px; padding: 10px; border-radius: 12px; background: var(--pale); }
+.drawer-trigger span { display: block; width: 20px; height: 2px; margin: 4px auto; border-radius: 2px; background: currentColor; }
+.drawer-overlay { position: fixed; z-index: 100; inset: 0; background: #0714267a; backdrop-filter: blur(3px); }
+.drawer-overlay[hidden] { display: none; }.app-drawer { width: min(86vw,340px); height: 100dvh; padding: 18px; overflow-y: auto; color: var(--text,var(--ink)); background: var(--surface,#fff); box-shadow: 18px 0 55px #00142f33; animation: drawerIn .2s ease-out; }.drawer-head { display: flex; align-items: center; gap: 11px; padding: 3px 2px 18px; border-bottom: 1px solid var(--line); }.drawer-brand { color: var(--blue); font-size: 29px; }.drawer-head b { flex: 1; font-size: 1.08rem; }.drawer-head button { width: 38px; height: 38px; border-radius: 50%; font-size: 1.5rem; }.drawer-account { display: flex; align-items: center; gap: 11px; width: 100%; margin: 16px 0; padding: 12px; border-radius: 15px; background: color-mix(in srgb,var(--blue) 7%,var(--surface,#fff)); text-align: left; }.drawer-account > span:last-child { display: grid; }.drawer-account small { color: var(--muted); }.app-drawer nav { display: grid; height: auto; gap: 5px; }.app-drawer nav button { width: 100%; height: auto; justify-content: flex-start; margin: 0; padding: 12px 14px; border-radius: 12px; }.app-drawer nav button span { display: inline; }.drawer-compose { width: 100%; margin-top: 18px; min-height: 46px; }.drawer-open { overflow: hidden; }@keyframes drawerIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
 h1 {
   font-size: 21px;
   letter-spacing: 0.04em;
@@ -619,6 +623,7 @@ dialog textarea {
   }
 }
 @media (max-width: 960px) {
+  .drawer-trigger { display: block; }
   .shell {
     max-width: 800px;
     grid-template-columns: 180px minmax(0, 1fr);

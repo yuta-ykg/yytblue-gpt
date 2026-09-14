@@ -644,6 +644,14 @@ loadChatGPTSession();
 function githubAccountHTML() {
   return `<section class="settings-panel github-account"><span class="eyebrow">SIGN IN</span><h2>${marketText("ログイン方法", "Sign-in methods")}</h2><div class="auth-provider"><div class="auth-provider-head"><span class="chatgpt-mark">✳</span><div><b>ChatGPT</b><small>${chatgptUser ? escape(chatgptUser.name) : marketText("未ログイン", "Not signed in")}</small></div></div>${chatgptUser ? `<a class="provider-signout" href="/signout-with-chatgpt?return_to=/" target="_top">${marketText("ログアウト", "Sign out")}</a>` : `<a class="chatgpt-login" href="/signin-with-chatgpt?return_to=/" target="_top">${marketText("ChatGPTでログイン", "Continue with ChatGPT")}</a>`}</div><div class="auth-provider"><div class="auth-provider-head"><span class="github-mark">GH</span><div><b>GitHub</b><small>${githubUser ? `@${escape(githubUser.login)}` : marketText("未ログイン", "Not signed in")}</small></div></div>${githubUser ? `<button type="button" class="provider-signout" data-github-logout>${marketText("ログアウト", "Sign out")}</button>` : `<a class="github-login" href="/api/auth/github/start">${marketText("GitHubでログイン", "Continue with GitHub")}</a>`}</div>${githubDevBypassAvailable && !githubUser ? `<button type="button" class="dev-login-skip" data-github-dev-login>${marketText("開発用ログインをスキップ", "Skip sign-in for development")}</button><small class="dev-only-note">${marketText("localhostでのみ利用できます。本番環境では無効です。", "Available only on localhost and disabled in production.")}</small>` : ""}</section>`;
 }
+function setDrawer(open) {
+  const overlay = $("#drawer-overlay");
+  overlay.hidden = !open;
+  document.body.classList.toggle("drawer-open", open);
+  $("#open-drawer").setAttribute("aria-expanded", String(open));
+  if (open) $("#close-drawer").focus();
+  else $("#open-drawer").focus();
+}
 function navigate(v, u = "you") {
   view = v;
   profileUser = u;
@@ -804,6 +812,10 @@ window.addEventListener(
 window.addEventListener("resize", updateBottomBar);
 function applyLanguage() {
   document.documentElement.lang = lang;
+  $("#drawer-title").textContent = marketText("メニュー", "Menu");
+  $("#open-drawer").setAttribute("aria-label", marketText("メニューを開く", "Open menu"));
+  $("#close-drawer").setAttribute("aria-label", marketText("メニューを閉じる", "Close menu"));
+  $("#drawer-compose").querySelector("span").textContent = tr("compose");
   document.querySelector(".demo-banner").textContent = tr("demo");
   document.querySelector('[data-tab="all"]').textContent = tr("recommended");
   document.querySelector('[data-tab="following"]').textContent =
@@ -1422,6 +1434,9 @@ function render() {
       ([id, n]) =>
         `<button data-view="${id}" class="${view === id ? "selected" : ""}" aria-label="${n}" title="${n}" ${view === id ? 'aria-current="page"' : ""}>${icon(id)}<span>${n}</span></button>`,
     )
+    .join("");
+  $("#drawer-nav").innerHTML = Object.entries(names)
+    .map(([id, n]) => `<button data-view="${id}" class="${view === id ? "selected" : ""}" aria-label="${n}" ${view === id ? 'aria-current="page"' : ""}>${icon(id)}<span>${n}</span></button>`)
     .join("");
   $("#tabs").hidden = view !== "home";
   $("#composer").style.display = view === "home" ? "flex" : "none";
@@ -2200,6 +2215,22 @@ $("#compose-nav").onclick = () => {
   navigate("home");
   $("#post-text").focus();
 };
+$("#open-drawer").onclick = () => setDrawer(true);
+$("#close-drawer").onclick = () => setDrawer(false);
+$("#drawer-overlay").onclick = (e) => {
+  if (e.target === $("#drawer-overlay")) setDrawer(false);
+};
+$("#drawer-compose").onclick = () => {
+  setDrawer(false);
+  navigate("home");
+  $("#post-text").focus();
+};
+$("#app-drawer").addEventListener("click", (e) => {
+  if (e.target.closest("[data-person]")) setDrawer(false);
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !$("#drawer-overlay").hidden) setDrawer(false);
+});
 $("#account").onclick = () => navigate("user");
 $(".brand").onclick = (e) => {
   e.preventDefault();
@@ -2325,6 +2356,7 @@ document.addEventListener("click", async (e) => {
     if (b.dataset.view === "search") query = "";
     if (b.dataset.view === "lists") selectedListId = null;
     navigate(b.dataset.view);
+    if (b.closest("#app-drawer")) setDrawer(false);
   }
   if (b.dataset.language) {
     lang = b.dataset.language;

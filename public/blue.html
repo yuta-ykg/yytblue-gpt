@@ -18,6 +18,14 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <div id="drawer-overlay" class="drawer-overlay" hidden>
+      <aside id="app-drawer" class="app-drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+        <div class="drawer-head"><span class="drawer-brand" aria-hidden="true">✳</span><b id="drawer-title">メニュー</b><button type="button" id="close-drawer" aria-label="メニューを閉じる">×</button></div>
+        <button type="button" class="drawer-account" data-person="you"><span class="avatar me">Y</span><span><b>あなた</b><small>@you</small></span></button>
+        <nav id="drawer-nav" aria-label="ドロワーナビゲーション"></nav>
+        <button type="button" class="primary drawer-compose" id="drawer-compose">＋ <span>ポストする</span></button>
+      </aside>
+    </div>
     <div class="shell">
       <aside class="left">
         <a class="brand" href="#" aria-label="Blue ホーム" title="Blue"
@@ -38,6 +46,7 @@
       </aside>
       <main>
         <header>
+          <button type="button" id="open-drawer" class="drawer-trigger" aria-label="メニューを開く" aria-controls="app-drawer" aria-expanded="false"><span></span><span></span><span></span></button>
           <h1 id="title">ホーム</h1>
           <span class="header-note">YOUR DAILY CONNECTION</span
           ><span class="spark">✳</span>
