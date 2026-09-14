@@ -486,6 +486,7 @@ let relationships = [];
 let lists = [];
 let selectedListId = null;
 let githubUser = null;
+let githubDevBypassAvailable = false;
 let helpQuery = "";
 let view = "home",
   tab = "all",
@@ -619,7 +620,9 @@ loadServerState();
 async function loadGitHubSession() {
   try {
     const response = await fetch("/api/auth/github/session", { cache: "no-store" });
-    githubUser = response.ok ? (await response.json()).user : null;
+    const session = response.ok ? await response.json() : {};
+    githubUser = session.user || null;
+    githubDevBypassAvailable = Boolean(session.devBypassAvailable);
     const result = new URLSearchParams(location.search).get("github");
     if (result) {
       history.replaceState({}, "", location.pathname);
@@ -630,7 +633,7 @@ async function loadGitHubSession() {
 }
 loadGitHubSession();
 function githubAccountHTML() {
-  return `<section class="settings-panel github-account"><span class="eyebrow">SIGN IN</span><h2>${marketText("GitHubログイン", "GitHub sign-in")}</h2>${githubUser ? `<div class="github-user">${githubUser.avatarUrl ? `<img src="${escape(githubUser.avatarUrl)}" alt="">` : `<span>GH</span>`}<div><b>${escape(githubUser.name)}</b><small>@${escape(githubUser.login)}</small></div><button type="button" data-github-logout>${marketText("ログアウト", "Sign out")}</button></div><p>${marketText("GitHubアカウントでログインしています。", "You are signed in with GitHub.")}</p>` : `<p>${marketText("GitHubアカウントを使ってログインできます。認証後もGitHubのパスワードはyytblueに共有されません。", "Sign in with your GitHub account. Your GitHub password is never shared with yytblue.")}</p><a class="github-login" href="/api/auth/github/start"><span aria-hidden="true">●</span>${marketText("GitHubでログイン", "Continue with GitHub")}</a>`}</section>`;
+  return `<section class="settings-panel github-account"><span class="eyebrow">SIGN IN</span><h2>${marketText("ログインとログアウト", "Sign in and sign out")}</h2>${githubUser ? `<div class="github-user">${githubUser.avatarUrl ? `<img src="${escape(githubUser.avatarUrl)}" alt="">` : `<span>GH</span>`}<div><b>${escape(githubUser.name)}</b><small>@${escape(githubUser.login)}</small></div><button type="button" data-github-logout>${marketText("GitHubからログアウト", "Sign out of GitHub")}</button></div><p>${marketText("GitHubアカウントでログインしています。", "You are signed in with GitHub.")}</p>` : `<p>${marketText("GitHubアカウントを使ってログインできます。認証後もGitHubのパスワードはyytblueに共有されません。", "Sign in with your GitHub account. Your GitHub password is never shared with yytblue.")}</p><a class="github-login" href="/api/auth/github/start"><span aria-hidden="true">●</span>${marketText("GitHubでログイン", "Continue with GitHub")}</a>${githubDevBypassAvailable ? `<button type="button" class="dev-login-skip" data-github-dev-login>${marketText("開発用ログインをスキップ", "Skip sign-in for development")}</button><small class="dev-only-note">${marketText("localhostでのみ利用できます。本番環境では無効です。", "Available only on localhost and disabled in production.")}</small>` : ""}`}</section><section class="settings-panel signout-panel"><h2>${marketText("サイトからログアウト", "Sign out of the site")}</h2><p>${marketText("この端末のサイトセッションを終了します。", "End the site session on this device.")}</p><a href="/signout-with-chatgpt?return_to=/" target="_top">${marketText("ログアウト", "Sign out")}</a></section>`;
 }
 function navigate(v, u = "you") {
   view = v;
@@ -2378,6 +2381,14 @@ document.addEventListener("click", async (e) => {
       render();
       notify(marketText("GitHubからログアウトしました", "Signed out of GitHub"));
     }
+    return;
+  }
+  if (b.hasAttribute("data-github-dev-login")) {
+    const response = await fetch("/api/auth/github/dev-login", { method: "POST" });
+    if (response.ok) {
+      await loadGitHubSession();
+      notify(marketText("開発用アカウントでログインしました", "Signed in with the development account"));
+    } else notify(marketText("本番環境では利用できません", "Not available in production"));
     return;
   }
   if (b.hasAttribute("data-edit-profile")) {
