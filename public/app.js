@@ -488,6 +488,7 @@ let view = "home",
   composingStock = null,
   composingImages = [],
   composingAudio = null,
+  composingYoutube = null,
   mediaRecorder = null,
   recordingChunks = [],
   recordingStream = null,
@@ -638,7 +639,7 @@ function helpCenterHTML() {
   const items = lang === "ja" ? [
     ["はじめに", "yytblueはどのようなサービスですか？", "投稿、画像・音声の共有、質問箱、ゲーム、交友関係などを楽しめるマイクロブログです。設定から言語や表示テーマも選べます。"],
     ["投稿", "ポスト、返信、リポスト、引用リポストの違いは？", "ポストは通常の投稿、返信は投稿への返答です。リポストは投稿を共有し、引用リポストでは自分のコメントを添えて共有できます。"],
-    ["画像・音声", "画像や音声を投稿できますか？", "画像は最大4枚、音声は録音または音声ファイルから1件追加できます。画像と音声は同じ投稿に同時には追加できません。"],
+    ["画像・音声・動画", "画像、音声、YouTube動画を投稿できますか？", "画像は最大4枚、音声は録音または音声ファイルから1件追加できます。YouTube動画はURLを入力すると投稿内で再生できます。画像と音声は同じ投稿に同時には追加できません。"],
     ["PWA", "アプリとしてホーム画面に追加するには？", "設定の「yytblueをアプリとして使う」から案内を確認できます。対応ブラウザではインストールボタンを使えます。iPhoneではSafariの共有メニューから「ホーム画面に追加」を選択してください。"],
     ["アカウント", "プロフィールと公開範囲を変更するには？", "プロフィール画面で表示名、ユーザー名、自己紹介、MBTIを編集できます。設定ではアカウントを非公開に切り替えられます。ユーザー名は重複できません。"],
     ["検索", "都道府県や政令指定都市を検索できますか？", "できます。都道府県名や政令指定都市名を検索すると、地域案内と公式サイトへのリンクが表示されます。"],
@@ -650,7 +651,7 @@ function helpCenterHTML() {
   ] : [
     ["Getting started", "What is yytblue?", "yytblue is a microblog for posts, image and audio sharing, questions, games, and personal relationships. You can also choose a language and theme in Settings."],
     ["Posting", "How do posts, replies, reposts, and quote reposts differ?", "A post is a regular update. A reply responds to a post. A repost shares it, while a quote repost shares it with your own comment."],
-    ["Media", "Can I post images or audio?", "You can add up to four images, or one audio recording or audio file. Images and audio cannot be added to the same post."],
+    ["Media", "Can I post images, audio, or YouTube videos?", "You can add up to four images, one audio recording or audio file, or a YouTube video by entering its URL. Images and audio cannot be added to the same post."],
     ["PWA", "How do I add yytblue to my home screen?", "See the guide under Use yytblue as an app in Settings. On supported browsers, use Install app. On iPhone, use Safari Share, then Add to Home Screen."],
     ["Account", "How do I change my profile or privacy?", "Edit your name, username, bio, and MBTI from Profile. Set your account to private in Settings. Usernames must be unique."],
     ["Search", "Can I search prefectures and designated cities?", "Yes. Searching a prefecture or designated city shows a regional guide and a link to its official website."],
@@ -789,1579 +790,1658 @@ function applyLanguage() {
   $("#add-poll").title = tr("addPoll");
   $("#add-poll").setAttribute("aria-label", tr("addPoll"));
   $("#add-poll span:first-child").innerHTML = icon("poll");
-  $("#remove-poll").setAttribute("aria-label", tr("removePoll"));
-  document
-    .querySelectorAll("[data-poll-option]")
-    .forEach(
-      (input, i) =>
-        (input.placeholder = `${lang === "ja" ? "選択肢" : "Option"} ${i + 1}`),
-    );
-  $("#add-poll-option").textContent =
-    lang === "ja" ? "＋ 選択肢を追加" : "+ Add option";
-  document
-    .querySelectorAll("[data-remove-poll-option]")
-    .forEach((b) =>
-      b.setAttribute(
-        "aria-label",
-        lang === "ja" ? "選択肢を削除" : "Remove option",
-      ),
-    );
-  document.querySelector(".feed-label span:last-child").textContent =
-    tr("latest");
-  document.querySelector("#right-search input").placeholder =
-    tr("searchPlaceholder");
-  document
-    .querySelector("#right-search input")
-    .setAttribute("aria-label", tr("searchPlaceholder"));
-  document.querySelector(".welcome h2").innerHTML = tr("welcome");
-  document.querySelector(".welcome p").innerHTML = tr("welcomeText");
-  document.querySelectorAll(".side-card h2")[0].childNodes[0].textContent =
-    tr("trends");
-  document.querySelectorAll(".side-card h2")[1].textContent = tr("people");
-  document.querySelector(".compose-nav span").textContent = tr("compose");
-  document
-    .querySelector(".compose-nav")
-    .setAttribute("aria-label", tr("compose"));
-  document.querySelector(".compose-nav").title = tr("compose");
-  document.querySelector(".account").setAttribute("aria-label", tr("user"));
-  document.querySelector(".account").title = tr("user");
-  const ui =
-    lang === "ja"
-      ? {
-          trial: "体験版",
-          motto: "あなたの「いま」を、ここから。",
-          you: "あなた",
-          repostTitle: "リポスト",
-          plain: "↻ リツイート<br><small>コメントなしで共有</small>",
-          quote: "❝ 引用リツイート<br><small>コメントを添えて共有</small>",
-          replyTitle: "返信する",
-          replyPlaceholder: "返信を入力",
-          replyButton: "返信する",
-          end: "ここまでのポストを読みました",
-          again: "また、新しいつながりを。",
-          demoFoot:
-            "Blue · インタラクティブデモ<br>表示される人物・ポストはサンプルです。",
-        }
-      : {
-          trial: "DEMO",
-          motto: "Share what is happening now.",
-          you: "You",
-          repostTitle: "Repost",
-          plain: "↻ Repost<br><small>Share without a comment</small>",
-          quote: "❝ Quote repost<br><small>Add a comment and share</small>",
-          replyTitle: "Reply",
-          replyPlaceholder: "Write a reply",
-          replyButton: "Reply",
-          end: "You're all caught up",
-          again: "Come back for new connections.",
-          demoFoot:
-            "Blue · Interactive demo<br>People and posts shown are samples.",
-        };
-  document.querySelector(".demo-label").textContent = ui.trial;
-  document.querySelector(".left-bottom>p").textContent = ui.motto;
-  document.querySelector(".account b").textContent =
-    users.find((u) => u.id === "you").name === "あなた"
-      ? ui.you
-      : users.find((u) => u.id === "you").name;
-  document.querySelector(".account small").textContent =
-    "@" + users.find((u) => u.id === "you").handle;
-  document.querySelector(".account .avatar").textContent = users.find(
-    (u) => u.id === "you",
-  ).initial;
-  document.querySelector(".composer .avatar").textContent = users.find(
-    (u) => u.id === "you",
-  ).initial;
-  document.querySelector("#repost-dialog h2").textContent = ui.repostTitle;
-  document.querySelectorAll(".repost-choice")[0].innerHTML = ui.plain;
-  document.querySelectorAll(".repost-choice")[1].innerHTML = ui.quote;
-  document.querySelector("#profile-dialog h2").textContent = tr("editProfile");
-  $("#profile-help").textContent = tr("editProfileHelp");
-  document.querySelector('label[for="profile-name"]').textContent =
-    tr("displayName");
-  document.querySelector('label[for="profile-handle"]').textContent =
-    tr("username");
-  document.querySelector('label[for="profile-bio"]').textContent =
-    tr("bioLabel");
-  document.querySelector('label[for="profile-mbti"]').textContent =
-    tr("mbtiLabel");
-  $("#profile-mbti option[value='']").textContent = tr("mbtiUnset");
-  $("#cancel-profile").textContent = tr("cancel");
-  $("#save-profile").textContent = tr("saveChanges");
-  document.querySelector("#reply-dialog h2").textContent = ui.replyTitle;
-  $("#reply-text").placeholder = ui.replyPlaceholder;
-  document.querySelector("#reply-form>.primary").textContent = ui.replyButton;
-  document.querySelector(".feed-end p").textContent = ui.end;
-  document.querySelector(".feed-end small").textContent = ui.again;
-  document.querySelector(".demo-foot").innerHTML = ui.demoFoot;
-  const trendData =
-    lang === "ja"
-      ? [
-          ["暮らし・日常", "#日々のこと", "1,284"],
-          ["クリエイティブ", "#デザイン", "856"],
-          ["好きなこと", "#音楽のある暮らし", "642"],
-        ]
-      : [
-          ["Life & daily", "#EverydayLife", "1,284"],
-          ["Creative", "#Design", "856"],
-          ["Interests", "#LifeWithMusic", "642"],
-        ];
-  $("#trends").innerHTML = trendData
-    .map(
-      ([c, t, n]) =>
-        `<button class="trend" data-trend="${t}"><small>${c}</small><b>${t}</b><em>${n} ${lang === "ja" ? "件のポスト · サンプル" : "sample posts"}</em></button>`,
-    )
-    .join("");
-  updateQuoteComposer();
+  $("#add-youtub…37931 tokens truncated…(--muted); font-style: normal; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 620px) { .holder-chart { grid-template-columns: 1fr; justify-items: center; } .holder-legend { width: 100%; grid-template-columns: 1fr; } }
+.holder-rank {
+  color: var(--muted);
+  font-weight: 700;
+  text-align: center;
 }
-function trendViewHTML() {
-  const data =
-    lang === "ja"
-      ? [
-          ["暮らし・日常", "#日々のこと", "1,284"],
-          ["クリエイティブ", "#デザイン", "856"],
-          ["好きなこと", "#音楽のある暮らし", "642"],
-          ["本・学び", "#読書", "518"],
-          ["写真", "#今日の写真", "376"],
-          ["日記", "#今日の記録", "294"],
-        ]
-      : [
-          ["Life & daily", "#EverydayLife", "1,284"],
-          ["Creative", "#Design", "856"],
-          ["Interests", "#LifeWithMusic", "642"],
-          ["Books & learning", "#Reading", "518"],
-          ["Photography", "#PhotoOfTheDay", "376"],
-          ["Journal", "#Today", "294"],
-        ];
-  return `<section class="trends-page"><span class="eyebrow">TRENDING NOW</span><h2>${tr("trendTitle")}</h2><p>${tr("trendHelp")}</p><div class="trend-ranking">${data.map(([category, label, count], i) => `<button data-trend="${label}" class="trend-row"><span class="trend-rank">${String(i + 1).padStart(2, "0")}</span><span class="trend-copy"><small>${category}</small><b>${label}</b><em>${count} ${lang === "ja" ? "件のポスト" : "posts"}</em></span><span class="trend-arrow">↗</span></button>`).join("")}</div></section>`;
+.holder-name,
+.holder-power {
+  display: grid;
+  min-width: 0;
 }
-function userSearchHTML() {
-  const normalized = query.trim().replace(/^@/, "").toLowerCase();
-  const matches = users.filter(
-    (u) =>
-      !normalized ||
-      (u.name + " " + u.id + " " + u.handle).toLowerCase().includes(normalized),
-  );
-  const cards = matches
-    .map(
-      (u) =>
-        `<article class="user-result"><button data-person="${u.id}" class="user-result-main" aria-label="${u.name}">${avatar(u)}<span><b>${u.name}</b><small>@${u.handle}</small><em>${u.bio}</em></span></button>${u.id === "you" ? `<span class="self-label">${tr("youLabel")}</span>` : `<button data-follow="${u.id}" class="follow ${following.has(u.id) ? "on" : ""}" aria-pressed="${following.has(u.id)}">${following.has(u.id) ? tr("followingBtn") : tr("follow")}</button>`}</article>`,
-    )
-    .join("");
-  return `<section class="user-results"><h2>${query ? tr("accounts") : tr("suggestedAccounts")}</h2>${cards || `<p class="no-users">${tr("noAccounts")}</p>`}</section>`;
+.holder-name b,
+.holder-name small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-// Official prefectural portals; directory: https://www.wam.go.jp/content/wamnet/pcpub/top/link/top_link04.html
-const prefectureGuides = "北海道|Hokkaido|ほっかいどう|北海道|札幌市|hokkaido.lg\n青森県|Aomori|あおもり|東北|青森市|aomori.lg\n岩手県|Iwate|いわて|東北|盛岡市|iwate\n宮城県|Miyagi|みやぎ|東北|仙台市|miyagi\n秋田県|Akita|あきた|東北|秋田市|akita.lg\n山形県|Yamagata|やまがた|東北|山形市|yamagata\n福島県|Fukushima|ふくしま|東北|福島市|fukushima.lg\n茨城県|Ibaraki|いばらき|関東|水戸市|ibaraki\n栃木県|Tochigi|とちぎ|関東|宇都宮市|tochigi.lg\n群馬県|Gunma|ぐんま|関東|前橋市|gunma\n埼玉県|Saitama|さいたま|関東|さいたま市|saitama.lg\n千葉県|Chiba|ちば|関東|千葉市|chiba.lg\n東京都|Tokyo|とうきょう|関東|新宿区|metro.tokyo.lg\n神奈川県|Kanagawa|かながわ|関東|横浜市|kanagawa\n新潟県|Niigata|にいがた|中部|新潟市|niigata.lg\n富山県|Toyama|とやま|中部|富山市|toyama\n石川県|Ishikawa|いしかわ|中部|金沢市|ishikawa.lg\n福井県|Fukui|ふくい|中部|福井市|fukui.lg\n山梨県|Yamanashi|やまなし|中部|甲府市|yamanashi\n長野県|Nagano|ながの|中部|長野市|nagano.lg\n岐阜県|Gifu|ぎふ|中部|岐阜市|gifu.lg\n静岡県|Shizuoka|しずおか|中部|静岡市|shizuoka\n愛知県|Aichi|あいち|中部|名古屋市|aichi\n三重県|Mie|みえ|近畿|津市|mie.lg\n滋賀県|Shiga|しが|近畿|大津市|shiga.lg\n京都府|Kyoto|きょうと|近畿|京都市|kyoto\n大阪府|Osaka|おおさか|近畿|大阪市|osaka.lg\n兵庫県|Hyogo|ひょうご|近畿|神戸市|hyogo.lg\n奈良県|Nara|なら|近畿|奈良市|nara\n和歌山県|Wakayama|わかやま|近畿|和歌山市|wakayama.lg\n鳥取県|Tottori|とっとり|中国|鳥取市|tottori.lg\n島根県|Shimane|しまね|中国|松江市|shimane.lg\n岡山県|Okayama|おかやま|中国|岡山市|okayama\n広島県|Hiroshima|ひろしま|中国|広島市|hiroshima.lg\n山口県|Yamaguchi|やまぐち|中国|山口市|yamaguchi.lg\n徳島県|Tokushima|とくしま|四国|徳島市|tokushima.lg\n香川県|Kagawa|かがわ|四国|高松市|kagawa.lg\n愛媛県|Ehime|えひめ|四国|松山市|ehime\n高知県|Kochi|こうち|四国|高知市|kochi.lg\n福岡県|Fukuoka|ふくおか|九州・沖縄|福岡市|fukuoka.lg\n佐賀県|Saga|さが|九州・沖縄|佐賀市|saga.lg\n長崎県|Nagasaki|ながさき|九州・沖縄|長崎市|nagasaki\n熊本県|Kumamoto|くまもと|九州・沖縄|熊本市|kumamoto\n大分県|Oita|おおいた|九州・沖縄|大分市|oita\n宮崎県|Miyazaki|みやざき|九州・沖縄|宮崎市|miyazaki.lg\n鹿児島県|Kagoshima|かごしま|九州・沖縄|鹿児島市|kagoshima\n沖縄県|Okinawa|おきなわ|九州・沖縄|那覇市|okinawa".split("\n").map(row => {
-  const [name, en, kana, region, capital, host] = row.split("|");
-  return { name, en, kana, region, capital, url: "https://www." + (host.startsWith("metro.") ? host : "pref." + host) + ".jp/" };
-});
-function matchingPrefectures(value) {
-  const q = String(value).normalize("NFKC").toLowerCase().trim().replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
-  if (!q || q.startsWith("@")) return [];
-  return prefectureGuides.filter(p => {
-    const short = p.name === "北海道" ? p.name : p.name.slice(0, -1);
-    // Kyoto must not match the middle of Tokyo-to (東京都).
-    const kanji = q.replace(/東京都/g, p.name === "東京都" ? "東京都" : "");
-    const kanaTokens = q.split(/[\s#＃、,。・]+/);
-    return kanji.includes(short) || kanaTokens.some(t => t === p.kana || t === p.kana + "けん" || t === p.kana + "ふ" || t === p.kana + "と") ||
-      new RegExp("(^|[^a-z])" + p.en.toLowerCase() + "([^a-z]|$)").test(q);
-  });
+.holder-name em {
+  color: var(--blue);
+  font-size: 0.75rem;
+  font-style: normal;
 }
-// Designated cities: https://www.siteitosi.jp/about/designated.html
-const designatedCityGuides = "札幌市|Sapporo|さっぽろ|北海道|www.city.sapporo.jp\n仙台市|Sendai|せんだい|宮城県|www.city.sendai.jp\nさいたま市|Saitama|さいたま|埼玉県|www.city.saitama.lg.jp\n千葉市|Chiba|ちば|千葉県|www.city.chiba.jp\n横浜市|Yokohama|よこはま|神奈川県|www.city.yokohama.lg.jp\n川崎市|Kawasaki|かわさき|神奈川県|www.city.kawasaki.jp\n相模原市|Sagamihara|さがみはら|神奈川県|www.city.sagamihara.kanagawa.jp\n新潟市|Niigata|にいがた|新潟県|www.city.niigata.lg.jp\n静岡市|Shizuoka|しずおか|静岡県|www.city.shizuoka.lg.jp\n浜松市|Hamamatsu|はままつ|静岡県|www.city.hamamatsu.shizuoka.jp\n名古屋市|Nagoya|なごや|愛知県|www.city.nagoya.jp\n京都市|Kyoto|きょうと|京都府|www.city.kyoto.lg.jp\n大阪市|Osaka|おおさか|大阪府|www.city.osaka.lg.jp\n堺市|Sakai|さかい|大阪府|www.city.sakai.lg.jp\n神戸市|Kobe|こうべ|兵庫県|www.city.kobe.lg.jp\n岡山市|Okayama|おかやま|岡山県|www.city.okayama.jp\n広島市|Hiroshima|ひろしま|広島県|www.city.hiroshima.lg.jp\n北九州市|Kitakyushu|きたきゅうしゅう|福岡県|www.city.kitakyushu.lg.jp\n福岡市|Fukuoka|ふくおか|福岡県|www.city.fukuoka.lg.jp\n熊本市|Kumamoto|くまもと|熊本県|www.city.kumamoto.jp".split("\n").map(row => {
-  const [name, en, kana, prefecture, host] = row.split("|");
-  return { name, en, kana, prefecture, city: true, url: "https://" + host + "/" };
-});
-function matchingDesignatedCities(value) {
-  const q = String(value).normalize("NFKC").toLowerCase().trim().replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
-  if (!q || q.startsWith("@")) return [];
-  return designatedCityGuides.filter(p => {
-    const text = q.replace(/東京都/g, "").replace(new RegExp(p.prefecture, "g"), "");
-    const short = p.name.slice(0, -1);
-    const tokens = text.split(/[\s#＃、,。・]+/);
-    return text.includes(p.name) || (short.length > 1 && /[一-龠]/.test(short) && text.includes(short)) ||
-      tokens.some(t => t === short || t === p.kana || t === p.kana + "し") ||
-      new RegExp("(^|[^a-z])" + p.en.toLowerCase() + "(?: city)?([^a-z]|$)").test(text);
-  });
+.holder-power {
+  text-align: right;
 }
-function prefectureGuideHTML(value) {
-  const matches = [...matchingDesignatedCities(value), ...matchingPrefectures(value)];
-  if (!matches.length) return "";
-  return '<section class="prefecture-guides" aria-label="' + marketText("地域の案内", "Area guides") + '">' + matches.map(p => `
-    <article class="prefecture-guide">
-      <small>${p.city ? marketText("政令指定都市ガイド", "DESIGNATED CITY GUIDE") : marketText("都道府県ガイド", "PREFECTURE GUIDE")}</small>
-      <h2>${escape(lang === "ja" ? p.name : p.en)}</h2>
-      <p>${p.city ? marketText("都道府県：", "Prefecture: ") + escape(lang === "ja" ? p.prefecture : prefectureGuides.find(pref => pref.name === p.prefecture)?.en || p.prefecture) : escape(p.region) + " · " + marketText("庁所在地：", "Government seat: ") + escape(p.capital)}</p>
-      <p>${marketText("暮らし・行政手続き・観光などの情報は、自治体の公式サイトで確認できます。", "Find local services, administrative procedures, and visitor information on the official government website.")}</p>
-      <a href="${p.url}" target="_blank" rel="noopener noreferrer">${marketText(p.name + "の公式サイト", "Official government website")} ↗</a>
-    </article>`).join("") + "</section>";
+.holder-name small,
+.holder-power small {
+  color: var(--muted);
 }
-function searchSafetyHTML(value) {
-  const q = value.toLowerCase().replace(/\s/g, "");
-  const crime = ["闇バイト", "やみばいと", "闇仕事", "裏バイト", "高額バイト", "高収入バイト", "即金バイト", "即日現金", "即日高収入", "ホワイト案件", "特殊詐欺", "受け子", "出し子", "運び屋", "口座売買", "口座譲渡", "口座を売る", "個人情報買います", "illegaljob", "blackjob", "darkjob"].some((word) => q.includes(word));
-  const gambling = ["オンラインカジノ", "オンカジ", "オンラインスロット", "オンラインバカラ", "スポーツベッティング", "カジノアプリ", "賭博サイト", "違法賭博", "ブックメーカー賭博", "onlinecasino", "onlinegambling", "sportsbetting", "casinosite", "gamblingsite"].some((word) => q.includes(word));
-  const consumer = ["詐欺被害", "架空請求", "不当請求", "高額請求", "ワンクリック詐欺", "フィッシング詐欺", "投資詐欺", "副業詐欺", "ロマンス詐欺", "定期購入", "解約できない", "返金されない", "返品できない", "偽サイト", "悪質商法", "マルチ商法", "ねずみ講", "押し売り", "訪問販売", "送り付け商法", "クーリングオフ", "消費者トラブル", "通販トラブル", "scam", "fraud", "fakewebsite", "subscriptiontrap"].some((word) => q.includes(word));
-  const crisis = ["死にたい", "しにたい", "死にたく", "消えたい", "いなくなりたい", "生きていたくない", "生きるのがつらい", "生きるのが辛い", "楽になりたい", "もう無理", "自殺", "じさつ", "自傷", "リスカ", "オーバードーズ", "首吊り", "飛び降り", "死に方", "suicide", "killmyself", "wanttodie", "iwanttodie", "endmylife", "selfharm", "overdose", "cutting"].some((word) => q.includes(word)) || /(^|[^a-z])od([^a-z]|$)/i.test(value);
-  if (!crime && !gambling && !consumer && !crisis) return "";
-  if (crisis) return `<section class="search-safety-alert crisis-alert" role="alert"><span>♥</span><div><b>${lang === "ja" ? "いま、ひとりで抱えなくて大丈夫です" : "You do not have to face this alone"}</b><p>${lang === "ja" ? "今すぐ自分を傷つけそう、または危険が迫っている場合は119番・110番へ連絡してください。誰かに話したいときは、よりそいホットライン（0120-279-338、24時間）や、いのちSOS（0120-061-338、24時間）があります。" : "If you may hurt yourself or are in immediate danger, call local emergency services now. You can also reach out to someone you trust or a crisis support service in your area."}</p><a href="https://www.mhlw.go.jp/mamorouyokokoro/" target="_blank" rel="noreferrer">${lang === "ja" ? "厚生労働省の相談窓口を見る" : "Find support resources"}</a></div></section>`;
-  if (gambling) return `<section class="search-safety-alert crime-alert" role="alert"><span>⚠</span><div><b>${lang === "ja" ? "オンライン賭博に関する注意" : "Warning about online gambling"}</b><p>${lang === "ja" ? "日本国内からオンラインカジノで賭博を行うことは犯罪です。海外で合法的に運営されているサイトでも利用しないでください。勧誘や金銭トラブル、犯罪に巻き込まれた場合は警察相談専用電話 #9110、緊急時は110番へ相談してください。" : "Online gambling may be illegal where you live, even when the operator is based overseas. Stop using the service and contact local police if you face threats, payment trouble, or criminal involvement."}</p><a href="https://www.npa.go.jp/" target="_blank" rel="noreferrer">${lang === "ja" ? "警察庁の案内を見る" : "Visit the National Police Agency"}</a></div></section>`;
-  if (crime) return `<section class="search-safety-alert crime-alert" role="alert"><span>⚠</span><div><b>${lang === "ja" ? "危険な求人・犯罪に関する相談" : "Safety support for risky job offers"}</b><p>${lang === "ja" ? "闇バイトは犯罪です。応募してしまった、脅されている、個人情報を送ってしまった場合は、すぐに警察へ相談してください。緊急時は110番、相談は警察相談専用電話 #9110 が利用できます。" : "Illegal job offers can involve serious crime. If you have applied, are being threatened, or shared personal information, contact the police. Call 110 in an emergency."}</p><a href="https://www.npa.go.jp/" target="_blank" rel="noreferrer">${lang === "ja" ? "警察庁の案内を見る" : "Visit the National Police Agency"}</a></div></section>`;
-  if (consumer) return `<section class="search-safety-alert consumer-alert" role="alert"><span>i</span><div><b>${lang === "ja" ? "契約・購入トラブルの相談" : "Help with purchases and contracts"}</b><p>${lang === "ja" ? "請求、定期購入、解約、返金、通販や投資勧誘などで困ったときは、相手に追加で支払う前に消費生活センターへ相談してください。消費者ホットライン188から、最寄りの相談窓口につながります。脅迫や緊急の被害は110番へ連絡してください。" : "If you have a problem involving billing, subscriptions, refunds, online shopping, or investment solicitations, stop further payments and contact a local consumer protection service. Contact police if you are threatened or in immediate danger."}</p><a href="https://www.caa.go.jp/policies/policy/local_cooperation/local_consumer_administration/hotline/" target="_blank" rel="noreferrer">${lang === "ja" ? "消費者ホットライン188の案内を見る" : "Find consumer support"}</a></div></section>`;
-  return "";
+.market-cap-ranking {
+  margin: 18px 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--surface);
 }
-let creatorMarket = CreatorMarket.initial();
-const marketText = (ja, en) => (lang === "ja" ? ja : en);
-function shareholderLeadersHTML(id, supply, fmt) {
-  const leaders = shareholderLeaders[id] || [];
-  const rows = leaders
-    .map((holder) => {
-      const power = supply ? (holder.shares / supply) * 100 : 0;
-      return `<li><span class="holder-rank">${holder.rank}</span><span class="holder-name"><b>${escape(holder.name)}${holder.private ? " 🔒" : ""}${holder.current ? ` <em>${marketText("あなた", "You")}</em>` : ""}</b><small>@${escape(holder.handle)}</small></span><span class="holder-power"><b>${power.toFixed(2)}%</b><small>${fmt(holder.shares)} ${marketText("票", "votes")}</small></span></li>`;
-    })
-    .join("");
-  return `<details class="shareholder-leaders"><summary>${marketText("議決権者 上位10人", "Top 10 voting-rights holders")}</summary>${rows ? `<ol>${rows}</ol>` : `<p>${marketText("議決権を持つユーザーはいません。", "No users currently hold voting rights.")}</p>`}</details>`;
+.market-cap-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: end;
+  padding: 16px;
 }
-function classShareIssuanceHTML(id, commonSupply, fmt) {
-  const issued = creatorMarket.classSupplies?.[id] || 0;
-  const brand = creatorMarket.classBrands?.[id] || { name: `${id.toUpperCase()} Class`, image: null };
-  const limit = Math.floor((commonSupply * 2) / 3);
-  const remaining = Math.max(0, limit - issued);
-  return `<section class="class-share-box"><div class="class-brand-head">${brand.image ? `<img src="${escape(brand.image)}" alt="">` : `<span>${escape(brand.name.slice(0, 1))}</span>`}<div><b>${escape(brand.name)}</b><small>${marketText("独立した議決権と株式分割", "Separate voting rights and stock splits")}</small></div></div><small>${marketText("発行上限は通常シェアの発行済み株式数の3分の2です。", "The issuance limit is two-thirds of issued Standard Shares.")}</small><div class="class-share-stats"><span>${marketText("1株価格", "Share price")}<b>${fmt(creatorMarket.classPrices?.[id] || creatorMarket.prices[id])} pt</b></span><span>${marketText("発行済み", "Issued")}<b>${fmt(issued)}</b></span><span>${marketText("上限", "Limit")}<b>${fmt(limit)}</b></span><span>${marketText("残り", "Remaining")}<b>${fmt(remaining)}</b></span></div><form data-class-share-form="${id}"><label>${marketText("ブランド名", "Brand name")}<input name="brand" maxlength="30" value="${escape(brand.name)}" required></label><label>${marketText("ブランド画像", "Brand image")}<input name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label><button type="submit" name="action" value="brand">${marketText("設定を保存", "Save branding")}</button><label>${marketText("発行株数", "Shares to issue")}<input name="quantity" type="number" min="1" max="${Math.max(1, remaining)}" step="1" value="1"></label><button type="submit" name="action" value="issue" ${!serverReady || remaining < 1 ? "disabled" : ""}>${marketText("ブランドシェアを発行", "Issue Brand Shares")}</button></form></section>`;
+.market-cap-heading h3 {
+  margin: 3px 0 0;
 }
-function classSplitGovernanceHTML({ id, vote, held, supply, fmt }) {
-  if (supply < 1) return "";
-  const soloRequired = Math.max(1, Math.ceil(supply * 0.01));
-  const jointRequired = Math.max(1, Math.ceil(supply * 0.03));
-  const revoteRequired = Math.max(1, Math.ceil(supply * 0.34));
-  const totalVotes = vote.yes + vote.no;
-  const yesRate = totalVotes ? Math.round((vote.yes / totalVotes) * 100) : 0;
-  const votingPower = (held / supply) * 100;
-  if (!vote.requested) {
-    return `<section class="split-vote class-governance"><div><b>${marketText("ブランドシェアだけの分割投票", "Brand Share split vote")}</b><small>${marketText("通常シェアとは別の議決権で、ブランドシェアだけを分割します。", "Uses separate voting rights and splits only the Brand Shares.")}</small></div><div class="voting-power"><b>${marketText("ブランドシェアの議決権", "Brand Share voting power")} ${votingPower.toFixed(2)}%</b><small>${marketText(`単独：${fmt(soloRequired)}株以上・共同：合計${fmt(jointRequired)}株以上`, `Individual: ${fmt(soloRequired)}+ · Joint: ${fmt(jointRequired)}+`)}</small></div><form class="split-request-form" data-class-split-request="${id}"><label>${marketText("分割倍率", "Split ratio")}<input name="ratio" type="number" min="2" max="200" step="1" value="${vote.ratio}" required></label><label>${marketText("リクエスト方法", "Request method")}<select name="mode"><option value="solo">${marketText("単独（1%以上）", "Individual (1%+)")}</option><option value="joint">${marketText("共同（合計3%以上）", "Joint (3%+)")}</option></select></label><button type="submit" ${!serverReady || held < soloRequired ? "disabled" : ""}>${marketText("ブランドシェアの投票を設置", "Create class-share vote")}</button></form></section>`;
+.market-cap-heading > small {
+  color: var(--muted);
+  text-align: right;
+}
+.market-cap-ranking ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.market-cap-ranking li {
+  display: grid;
+  grid-template-columns: 2rem auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+}
+.market-cap-ranking li:first-child {
+  background: var(--pale);
+}
+.cap-rank {
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-align: center;
+}
+.cap-creator {
+  display: grid;
+  min-width: 0;
+}
+.cap-creator small {
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.market-cap-ranking li > strong {
+  text-align: right;
+}
+@media (max-width: 600px) {
+  .market-cap-heading {
+    align-items: start;
+    flex-direction: column;
   }
-  const approved = totalVotes > 0 && vote.yes > vote.no;
-  const overLimit = supply * vote.ratio > Math.floor(((creatorMarket.supplies[id] || CreatorMarket.initialSupply) * 2) / 3);
-  return `<section class="split-vote class-governance"><div><b>${marketText(`ブランドシェア 第${vote.round}回・${vote.ratio}倍分割案`, `Brand Shares round ${vote.round} · ${vote.ratio}-for-1`)}</b><small>${marketText("通常シェアの投票と票数は合算されません。", "Votes are not combined with common-share voting.")}</small></div><div class="vote-meter"><span style="width:${yesRate}%"></span></div><p>${marketText("賛成", "For")} ${fmt(vote.yes)} · ${marketText("反対", "Against")} ${fmt(vote.no)} · ${yesRate}%</p><div class="split-actions"><button type="button" data-class-split-vote="yes" data-creator="${id}" ${!serverReady || held < 1 || vote.choice ? "disabled" : ""}>${marketText("賛成", "For")}</button><button type="button" data-class-split-vote="no" data-creator="${id}" ${!serverReady || held < 1 || vote.choice ? "disabled" : ""}>${marketText("反対", "Against")}</button></div><div class="revote-box"><button type="button" data-execute-class-split="${id}" ${!serverReady || !approved || overLimit ? "disabled" : ""}>${marketText("ブランドシェアを分割", "Split Brand Shares")}</button>${overLimit ? `<small>${marketText("発行上限を超えるため、この倍率では分割できません。", "This ratio would exceed the issuance limit.")}</small>` : ""}</div><div class="revote-box"><small>${marketText(`単独34%以上（${fmt(revoteRequired)}株以上）で1度だけ再投票できます。`, `A 34% individual stake (${fmt(revoteRequired)}+ shares) allows one revote.`)}</small><button type="button" data-class-revote="${id}" ${!serverReady || held < revoteRequired || vote.revoteUsed || totalVotes < 1 ? "disabled" : ""}>${vote.revoteUsed ? marketText("再投票済み", "Revote used") : marketText("再投票を開始", "Start revote")}</button></div></section>`;
-}
-function splitGovernanceHTML({ id, vote, held, supply, yesRate, fmt }) {
-  const soloRequired = Math.ceil(supply * 0.01);
-  const jointRequired = Math.ceil(supply * 0.03);
-  const revoteRequired = Math.ceil(supply * 0.34);
-  const votingPower = supply ? (held / supply) * 100 : 0;
-  if (!vote.requested) {
-    return `<section class="split-vote split-request"><div><b>${marketText("株式分割の投票設置リクエスト", "Request a stock-split vote")}</b><small>${marketText("投票の設置には単独で1%以上、共同で合計3%以上の議決権が必要です。", "Creating a vote requires 1% individually or 3% combined.")}</small></div><div class="voting-power"><b>${marketText("現在の議決権", "Current voting power")} ${votingPower.toFixed(2)}%</b><small>${marketText(`単独：${fmt(soloRequired)}株以上・共同：合計${fmt(jointRequired)}株以上`, `Individual: ${fmt(soloRequired)}+ shares · Joint: ${fmt(jointRequired)}+ combined shares`)}</small></div><form class="split-request-form" data-split-request-form="${id}"><label>${marketText("分割倍率", "Split ratio")}<input name="ratio" type="number" min="2" max="200" step="1" value="${vote.ratio}" required></label><label>${marketText("リクエスト方法", "Request method")}<select name="mode"><option value="solo">${marketText("単独（1%以上）", "Individual (1%+)")}</option><option value="joint">${marketText("共同（合計3%以上）", "Joint (3%+ combined)")}</option></select></label><button type="submit" ${!serverReady || held < soloRequired ? "disabled" : ""}>${marketText("投票を設置リクエスト", "Request vote")}</button></form>${held < soloRequired ? `<small class="vote-note">${marketText(`単独リクエストにはあと${fmt(soloRequired - held)}株必要です。`, `You need ${fmt(soloRequired - held)} more shares for an individual request.`)}</small>` : ""}</section>`;
+  .market-cap-heading > small {
+    text-align: left;
   }
-  const totalVotes = vote.yes + vote.no;
-  const approved = totalVotes > 0 && vote.yes > vote.no;
-  const splitExceedsCap = supply * vote.ratio > CreatorMarket.maxSupply;
-  const revoteDisabled =
-    !serverReady || held < revoteRequired || vote.revoteUsed || totalVotes < 1;
-  return `<section class="split-vote"><div><b>${marketText(`第${vote.round}回・${vote.ratio}倍分割案（1株→${vote.ratio}株）`, `Round ${vote.round} · ${vote.ratio}-for-1 split proposal`)}</b><small>${marketText(`投票設置：${vote.mode === "joint" ? "共同" : "単独"}・議決権${fmt(vote.requesterWeight)}票。投票自体は1株から参加できます。`, `Requested ${vote.mode === "joint" ? "jointly" : "individually"} with ${fmt(vote.requesterWeight)} voting rights. Any holder can vote from one share.`)}</small></div><div class="vote-meter" aria-label="${marketText("賛成率", "Approval rate")} ${yesRate}%"><span style="width:${yesRate}%"></span></div><p>${marketText("賛成", "For")} ${fmt(vote.yes)} · ${marketText("反対", "Against")} ${fmt(vote.no)} · ${marketText("賛成率", "Approval")} ${yesRate}%</p><div class="split-actions"><button type="button" data-split-vote="yes" data-creator="${id}" ${!serverReady || held < 1 || vote.choice ? "disabled" : ""} class="${vote.choice === "yes" ? "selected" : ""}">${marketText("賛成", "For")}</button><button type="button" data-split-vote="no" data-creator="${id}" ${!serverReady || held < 1 || vote.choice ? "disabled" : ""} class="${vote.choice === "no" ? "selected" : ""}">${marketText("反対", "Against")}</button></div>${held < 1 ? `<small class="vote-note">${marketText("投票するには1株以上保有してください。", "Own at least one share to vote.")}</small>` : vote.choice ? `<small class="vote-note">${marketText(`投票済み（${fmt(vote.weight)}票）`, `Vote submitted (${fmt(vote.weight)} votes)`)}</small>` : ""}<div class="revote-box"><small>${marketText("賛成票が反対票を上回ると分割を実行できます。株数と発行数は倍率分増え、1株価格は同じ倍率で割られます。", "When votes for exceed votes against, the split can be executed. Shares and supply multiply, while the per-share price is divided by the same ratio.")}</small><button type="button" data-execute-split="${id}" ${!serverReady || !approved || splitExceedsCap ? "disabled" : ""}>${marketText("株式分割を実行", "Execute split")}</button>${splitExceedsCap ? `<small class="vote-note">${marketText("実行すると発行上限21億株を超えます。", "Execution would exceed the 2.1 billion share cap.")}</small>` : ""}</div><div class="revote-box"><small>${marketText(`単独議決権34%以上（${fmt(revoteRequired)}株以上）で、この議案を1度だけ再投票にできます。`, `A holder with at least 34% individual voting power (${fmt(revoteRequired)}+ shares) can restart this proposal once.`)}</small><button type="button" data-request-revote="${id}" ${revoteDisabled ? "disabled" : ""}>${vote.revoteUsed ? marketText("再投票済み", "Revote used") : marketText("再投票を開始", "Start revote")}</button>${vote.revoteUsed ? `<small class="vote-note">${marketText("この議案では再実施できません。", "This proposal cannot be restarted again.")}</small>` : ""}</div></section>`;
-}
-function marketCapRankingHTML(fmt) {
-  const ranking = Object.keys(creatorMarket.prices)
-    .map((id) => ({
-      id,
-      price: creatorMarket.prices[id],
-      supply: creatorMarket.supplies[id],
-      marketCap: creatorMarket.prices[id] * creatorMarket.supplies[id],
-    }))
-    .sort((a, b) => b.marketCap - a.marketCap);
-  return `<section class="market-cap-ranking"><div class="market-cap-heading"><div><span class="eyebrow">RANKING</span><h3>${marketText("時価総額ランキング", "Market cap ranking")}</h3></div><small>${marketText("1株価格 × 発行済み株数", "Price per share × issued shares")}</small></div><ol>${ranking
-    .map((item, index) => {
-      const user = users.find((u) => u.id === item.id);
-      return `<li><span class="cap-rank">${index + 1}</span>${avatar(user)}<span class="cap-creator"><b>${escape(user.name)}</b><small>@${escape(user.handle)} · ${fmt(item.price)} pt × ${fmt(item.supply)} ${marketText("株", "shares")}</small></span><strong>${fmt(item.marketCap)} pt</strong></li>`;
-    })
-    .join("")}</ol></section>`;
-}
-function marketHTML() {
-  return sharedMarketHTML();
-}
-function legacyMarketHTML() {
-  const fmt = (n) => n.toLocaleString(lang === "ja" ? "ja-JP" : "en-US");
-  const value = Object.entries(creatorMarket.holdings).reduce(
-    (sum, [id, n]) => sum + n * creatorMarket.prices[id],
-    0,
-  );
-  return `<section class="creator-market"><h2>${marketText("クリエイターシェア", "Creator Shares")}</h2>
-    <p>${marketText("無料ポイントで楽しむ個人用シミュレーションです。現金の購入・換金・配当はありません。初回10,000 pt。各クリエイターは1,000株から始まり、発行上限は21億株です。", "A personal free-point simulation. No cash purchases, cash-out, or dividends. Start with 10,000 pt. Each creator starts with 1,000 shares and has a 2.1 billion share cap.")}</p>
-    <div class="market-summary"><div>${marketText("ポイント残高", "Points")}<strong>${fmt(creatorMarket.balance)} pt</strong></div><div>${marketText("保有株の評価額", "Holdings value")}<strong>${fmt(value)} pt</strong></div></div>
-    ${marketCapRankingHTML(fmt)}
-    ${!serverReady ? `<p role="status">${marketText("保存データの読み込みが完了するまで売買できません。", "Trading is unavailable until saved data has loaded.")}</p>` : ""}
-    ${Object.entries(creatorMarket.prices)
-      .map(([id, price]) => {
-        const u = users.find((u) => u.id === id),
-          held = creatorMarket.holdings[id] || 0;
-        const classHeld = creatorMarket.classHoldings?.[id] || 0;
-        const supply = creatorMarket.supplies[id];
-        const available = supply - held;
-        const vote = creatorMarket.splitVotes[id];
-        const totalVotes = vote.yes + vote.no;
-        const yesRate = totalVotes
-          ? Math.round((vote.yes / totalVotes) * 100)
-          : 0;
-        return `<article class="market-card"><div class="market-creator">${avatar(u)}<div><button data-person="${id}"><b>${escape(u.name)}</b></button><small>@${escape(u.handle)}</small></div></div><p><strong>${fmt(price)} pt</strong> / ${marketText("株", "share")} · ${marketText("保有", "Owned")}: ${fmt(held)}</p><p class="market-supply">${marketText("通常シェア発行済み", "Standard Shares issued")}: ${fmt(supply)} · ${marketText("残り", "Available")}: ${fmt(available)} · ${marketText("上限", "Maximum")}: ${fmt(CreatorMarket.maxSupply)}</p><form data-market-form="${id}"><label>${marketText("株数", "Quantity")}<input name="quantity" type="number" min="1" max="${Math.min(100, Math.max(1, available))}" step="1" value="1" required></label><button class="primary" name="side" value="buy" ${!serverReady || creatorMarket.balance < price || available < 1 ? "disabled" : ""}>${marketText("買う", "Buy")}</button><button name="side" value="sell" ${!serverReady || held < 1 ? "disabled" : ""}>${marketText("売る", "Sell")}</button></form><button type="button" class="share-stock-button" data-share-stock="${id}">${marketText("シェア情報を投稿", "Post Creator Shares")}</button>${classShareIssuanceHTML(id, supply, fmt)}${classSplitGovernanceHTML({ id, vote: creatorMarket.classSplitVotes[id], held: classHeld, supply: creatorMarket.classSupplies?.[id] || 0, fmt })}${shareholderLeadersHTML(id, supply, fmt)}${splitGovernanceHTML({ id, vote, held, supply, yesRate, fmt })}</article>`;
-      })
-      .join("")}
-    <h3>${marketText("売買履歴（直近100件）", "Recent trades (up to 100)")}</h3><ul class="market-history">${creatorMarket.history.map((t) => `<li><span>${escape(users.find((u) => u.id === t.creator)?.name || t.creator)} · ${t.side === "buy" ? marketText("購入", "Buy") : marketText("売却", "Sell")} ${t.quantity} ${marketText("株", "shares")}<small>${escape(new Date(t.at).toLocaleString(lang === "ja" ? "ja-JP" : "en-US"))}</small></span><b>${t.side === "buy" ? "−" : "+"}${fmt(t.total)} pt</b></li>`).join("") || `<li>${marketText("まだ取引はありません。", "No trades yet.")}</li>`}</ul></section>`;
-}
-document.addEventListener("submit", (e) => {
-  const form = e.target.closest("[data-market-form]");
-  if (!form) return;
-  e.preventDefault();
-  if (teenMode) { notify(marketText("ティーン向け制限中は売買できません", "Trading is unavailable with teen restrictions")); return; }
-  if (!serverReady) return;
-  try {
-    const quantity = Number(new FormData(form).get("quantity"));
-    creatorMarket = CreatorMarket.trade(
-      creatorMarket,
-      form.dataset.marketForm,
-      e.submitter?.value,
-      quantity,
-    );
-    render();
-    notify(marketText("取引を反映しました", "Trade recorded"));
-  } catch (error) {
-    notify(
-      error.message === "balance"
-        ? marketText("ポイントが不足しています", "Not enough points")
-        : error.message === "holdings"
-          ? marketText("保有株数が不足しています", "Not enough shares")
-          : error.message === "supply"
-            ? marketText(
-                "購入可能な株数を超えています",
-                "Not enough shares available",
-              )
-            : marketText(
-                "株数は1〜100の整数で入力してください",
-                "Enter a whole quantity from 1 to 100",
-              ),
-    );
+  .market-cap-ranking li {
+    grid-template-columns: 1.5rem auto minmax(0, 1fr);
   }
-});
-document.addEventListener("submit", async (e) => {
-  const form = e.target.closest("[data-class-share-form]");
-  if (!form) return;
-  e.preventDefault();
-  if (!serverReady) return;
-  try {
-    const data = new FormData(form);
-    const imageFile = data.get("image");
-    let imageUrl = null;
-    if (imageFile instanceof File && imageFile.size) {
-      if (imageFile.size > 5 * 1024 * 1024) throw Error("image_size");
-      const media = new FormData();
-      media.append("images", imageFile, imageFile.name);
-      const response = await fetch("/api/media", { method: "POST", body: media });
-      if (!response.ok) throw Error("image_upload");
-      imageUrl = (await response.json()).urls?.[0] || null;
-    }
-    creatorMarket = CreatorMarket.updateClassBrand(creatorMarket, form.dataset.classShareForm, data.get("brand"), imageUrl);
-    if (e.submitter?.value === "issue") {
-      creatorMarket = CreatorMarket.issueClassShares(creatorMarket, form.dataset.classShareForm, Number(data.get("quantity")));
-    }
-    render();
-    notify(e.submitter?.value === "issue" ? marketText("ブランドシェアを発行しました", "Brand Shares issued") : marketText("ブランド設定を保存しました", "Branding saved"));
-  } catch (error) {
-    notify(
-      error.message === "class_limit"
-        ? marketText(
-            "ブランドシェアは通常シェアの発行済み株式数の3分の2までです",
-            "Brand Shares are limited to two-thirds of issued Standard Shares",
-          )
-        : error.message === "image_size"
-          ? marketText("画像は5MB以下にしてください", "Choose an image up to 5 MB")
-        : marketText(
-            "発行株数は1以上の整数で入力してください",
-            "Check the brand name, image, and share quantity",
-          ),
-    );
-  }
-});
-document.addEventListener("click", (e) => {
-  const button = e.target.closest("[data-split-vote]");
-  if (!button || !serverReady) return;
-  try {
-    creatorMarket = CreatorMarket.voteSplit(
-      creatorMarket,
-      button.dataset.creator,
-      button.dataset.splitVote,
-    );
-    render();
-    notify(
-      marketText("株式分割の投票を受け付けました", "Split vote submitted"),
-    );
-  } catch (error) {
-    notify(
-      error.message === "not_holder"
-        ? marketText("投票するには1株以上必要です", "Own a share to vote")
-        : marketText("この提案には投票済みです", "You already voted"),
-    );
-  }
-});
-document.addEventListener("click", (e) => {
-  const button = e.target.closest("[data-share-stock]");
-  if (!button) return;
-  const creator = button.dataset.shareStock;
-  composingStock = {
-    creator,
-    price: creatorMarket.prices[creator],
-    supply: creatorMarket.supplies[creator],
-    marketCap:
-      creatorMarket.prices[creator] * creatorMarket.supplies[creator],
-  };
-  navigate("home");
-  updateStockComposer();
-  $("#composer").scrollIntoView({ behavior: "smooth", block: "start" });
-  $("#post-text").focus();
-  notify(marketText("クリエイターシェアを投稿に追加しました", "Creator Shares added to the post"));
-});
-document.addEventListener("click", (e) => {
-  const button = e.target.closest("[data-request-revote]");
-  if (!button || !serverReady) return;
-  try {
-    creatorMarket = CreatorMarket.requestRevote(
-      creatorMarket,
-      button.dataset.requestRevote,
-    );
-    render();
-    notify(marketText("票をリセットし、第2回投票を開始しました", "Votes reset. Round 2 has started."));
-  } catch (error) {
-    notify(
-      error.message === "revote_power"
-        ? marketText("再投票には単独議決権34%以上が必要です", "A 34% individual voting stake is required")
-        : error.message === "no_votes"
-          ? marketText("投票後に再投票を開始できます", "A vote must be cast before starting a revote")
-          : marketText("この議案の再投票はすでに使用済みです", "The one revote for this proposal has already been used"),
-    );
-  }
-});
-document.addEventListener("click", (e) => {
-  const button = e.target.closest("[data-execute-split]");
-  if (!button || !serverReady) return;
-  try {
-    creatorMarket = CreatorMarket.executeSplit(
-      creatorMarket,
-      button.dataset.executeSplit,
-    );
-    render();
-    notify(
-      marketText(
-        "株数と発行数を増やし、1株価格を分割しました",
-        "Shares and supply increased, and the per-share price was divided",
-      ),
-    );
-  } catch (error) {
-    notify(
-      error.message === "supply_cap"
-        ? marketText(
-            "発行上限21億株を超えるため実行できません",
-            "The split would exceed the 2.1 billion share cap",
-          )
-        : marketText(
-            "賛成票が反対票を上回ると実行できます",
-            "Votes for must exceed votes against",
-          ),
-    );
-  }
-});
-document.addEventListener("click", (e) => {
-  const button = e.target.closest("[data-class-split-vote]");
-  if (!button || !serverReady) return;
-  try {
-    creatorMarket = CreatorMarket.voteClassSplit(creatorMarket, button.dataset.creator, button.dataset.classSplitVote);
-    render();
-    notify(marketText("ブランドシェアの投票を受け付けました", "Brand Share vote submitted"));
-  } catch (error) {
-    notify(error.message === "not_holder" ? marketText("ブランドシェアを1株以上保有してください", "Own at least one Brand Share") : marketText("この提案には投票済みです", "You already voted"));
-  }
-});
-document.addEventListener("click", (e) => {
-  const button = e.target.closest("[data-class-revote]");
-  if (!button || !serverReady) return;
-  try {
-    creatorMarket = CreatorMarket.requestClassRevote(creatorMarket, button.dataset.classRevote);
-    render();
-    notify(marketText("ブランドシェアの第2回投票を開始しました", "Brand Share voting round 2 started"));
-  } catch {
-    notify(marketText("ブランドシェアの再投票条件を満たしていません", "Brand Share revote requirements are not met"));
-  }
-});
-document.addEventListener("click", (e) => {
-  const button = e.target.closest("[data-execute-class-split]");
-  if (!button || !serverReady) return;
-  try {
-    creatorMarket = CreatorMarket.executeClassSplit(creatorMarket, button.dataset.executeClassSplit);
-    render();
-    notify(marketText("ブランドシェアだけを分割しました", "Only the Brand Shares were split"));
-  } catch {
-    notify(marketText("ブランドシェアの分割条件を満たしていません", "Brand Share split requirements are not met"));
-  }
-});
-document.addEventListener("submit", (e) => {
-  const form = e.target.closest("[data-class-split-request]");
-  if (!form) return;
-  e.preventDefault();
-  if (!serverReady) return;
-  try {
-    const data = new FormData(form);
-    creatorMarket = CreatorMarket.requestClassSplitVote(creatorMarket, form.dataset.classSplitRequest, Number(data.get("ratio")), data.get("mode"));
-    render();
-    notify(marketText("ブランドシェアの分割投票を設置しました", "Brand Share split vote created"));
-  } catch {
-    notify(marketText("ブランドシェアの議決権条件を満たしていません", "Brand Share voting-power requirement is not met"));
-  }
-});
-document.addEventListener("submit", (e) => {
-  const form = e.target.closest("[data-split-request-form]");
-  if (!form) return;
-  e.preventDefault();
-  if (!serverReady) return;
-  try {
-    const data = new FormData(form);
-    creatorMarket = CreatorMarket.requestSplitVote(
-      creatorMarket,
-      form.dataset.splitRequestForm,
-      Number(data.get("ratio")),
-      data.get("mode"),
-    );
-    render();
-    notify(marketText("投票を設置しました", "Split vote created"));
-  } catch (error) {
-    notify(
-      error.message === "request_power"
-        ? marketText(
-            "投票設置に必要な議決権を満たしていません",
-            "You do not meet the voting-power requirement to create a vote",
-          )
-        : marketText(
-            "分割倍率は2〜200の整数にしてください",
-            "Enter a whole split ratio from 2 to 200",
-          ),
-    );
-  }
-});
-function render() {
-  if (teenMode && view === "market") view = "home";
-  const names = {
-    home: tr("home"),
-    search: tr("search"),
-    market: marketText("シェア市場", "Creator Shares"),
-    bookmark: tr("bookmark"),
-    questions: tr("questions"),
-    games: tr("games"),
-    diagnosis: tr("diagnosis"),
-    relationships: tr("relationships"),
-    help: tr("help"),
-    user: tr("user"),
-    settings: tr("settings"),
-  };
-  if (teenMode) delete names.market;
-  const currentTitle = view === "post" ? marketText("投稿詳細", "Post details") : names[view];
-  $("#title").textContent = currentTitle;
-  document.title = `Blue — ${currentTitle}`;
-  $("#nav").innerHTML = Object.entries(names)
-    .map(
-      ([id, n]) =>
-        `<button data-view="${id}" class="${view === id ? "selected" : ""}" aria-label="${n}" title="${n}" ${view === id ? 'aria-current="page"' : ""}>${icon(id)}<span>${n}</span></button>`,
-    )
-    .join("");
-  $("#tabs").hidden = view !== "home";
-  $("#composer").style.display = view === "home" ? "flex" : "none";
-  const settings = view === "settings",
-    standalone = settings || view === "market" || view === "questions" || view === "games" || view === "diagnosis" || view === "relationships" || view === "help" || (view === "search" && !query);
-  document.querySelector(".feed-label").hidden = standalone || view === "post";
-  $("#feed").hidden = standalone;
-  document.querySelector(".feed-end").hidden = standalone || view === "post";
-  const u = users.find((x) => x.id === profileUser);
-  $("#profile").innerHTML =
-    view === "settings"
-      ? `<section class="settings-panel privacy-panel"><span class="eyebrow">ACCOUNT</span><h2>${tr("accountPrivacyTitle")}</h2><div class="privacy-setting"><span><b>${tr("privateAccount")}</b><small>${tr("privateAccountHelp")}</small></span><button type="button" class="privacy-switch ${accountPrivate ? "on" : ""}" data-private-account role="switch" aria-checked="${accountPrivate}" aria-label="${tr("privateAccount")}"><span></span><b>${accountPrivate ? tr("privateAccountOn") : tr("privateAccountOff")}</b></button></div></section>`
-      : view === "user"
-        ? `<section class="profile-card">${avatar(u)}<h2>${u.name}${u.id === "you" && accountPrivate ? ` <span class="lock-badge" title="${tr("lockedAccount")}" aria-label="${tr("lockedAccount")}">🔒</span>` : ""}</h2><small>@${u.handle}</small>${u.mbti ? `<span class="mbti-badge">${escape(u.mbti)}</span>` : ""}<p>${u.bio}</p><small>${posts.filter((p) => p.u === u.id && !p.parent).length} ${tr("post")}${u.id === "you" ? ` · ${following.size} ${tr("following")}` : ""}</small>${u.id === "you" ? `<button class="edit-profile-button" data-edit-profile>${tr("editProfile")}</button>` : ""}</section>`
-        : "";
-  $("#search-area").innerHTML =
-    view === "search"
-      ? `<form class="inner-search" id="inner-search"><div class="search-box">${icon("search")}<input name="q" aria-label="${tr("searchPlaceholder")}" placeholder="${tr("searchPlaceholder")}" value="${escape(query)}"><button>${tr("find")}</button></div></form>${searchSafetyHTML(query)}${prefectureGuideHTML(query)}${query ? "" : trendViewHTML()}${userSearchHTML()}`
-      : settings
-        ? `<section class="settings-panel"><span class="eyebrow">LANGUAGE</span><h2>${tr("settingsTitle")}</h2><p>${tr("settingsHelp")}</p><div class="language-options"><button data-language="ja" class="language-choice ${lang === "ja" ? "selected" : ""}" aria-pressed="${lang === "ja"}"><span>あ</span><b>${tr("japanese")}</b><small>日本語</small></button><button data-language="en" class="language-choice ${lang === "en" ? "selected" : ""}" aria-pressed="${lang === "en"}"><span>A</span><b>${tr("english")}</b><small>English</small></button></div><p class="language-note">${tr("saved")}</p><div class="settings-divider"></div><span class="eyebrow">APPEARANCE</span><h2>${tr("appearanceTitle")}</h2><p>${tr("appearanceHelp")}</p><div class="theme-options"><button data-theme-choice="light" class="theme-choice ${theme === "light" ? "selected" : ""}" aria-pressed="${theme === "light"}"><span class="theme-preview light-preview">☀</span><b>${tr("light")}</b></button><button data-theme-choice="dark" class="theme-choice ${theme === "dark" ? "selected" : ""}" aria-pressed="${theme === "dark"}"><span class="theme-preview dark-preview">☾</span><b>${tr("dark")}</b></button><button data-theme-choice="darkblue" class="theme-choice ${theme === "darkblue" ? "selected" : ""}" aria-pressed="${theme === "darkblue"}"><span class="theme-preview darkblue-preview">◆</span><b>${tr("darkBlue")}</b></button><button data-theme-choice="lightorange" class="theme-choice ${theme === "lightorange" ? "selected" : ""}" aria-pressed="${theme === "lightorange"}"><span class="theme-preview orange-preview">●</span><b>${tr("lightOrange")}</b></button><button data-theme-choice="mint" class="theme-choice ${theme === "mint" ? "selected" : ""}" aria-pressed="${theme === "mint"}"><span class="theme-preview mint-preview">✦</span><b>${tr("mint")}</b></button><button data-theme-choice="monochrome" class="theme-choice ${theme === "monochrome" ? "selected" : ""}" aria-pressed="${theme === "monochrome"}"><span class="theme-preview monochrome-preview">◼</span><b>${tr("monochrome")}</b></button><button data-theme-choice="system" class="theme-choice ${theme === "system" ? "selected" : ""}" aria-pressed="${theme === "system"}"><span class="theme-preview system-preview">◐</span><b>${tr("system")}</b></button></div><p class="language-note">${tr("themeSaved")}</p><div class="settings-divider"></div><span class="eyebrow">LIKE ICON</span><h2>${tr("likeIconTitle")}</h2><p>${tr("likeIconHelp")}</p><div class="like-icon-options">${[
-            ["heart", "heartIcon"],
-            ["star", "starIcon"],
-            ["thumb", "thumbIcon"],
-            ["upvote", "upvoteIcon"],
-          ]
-            .map(
-              ([id, label]) =>
-                `<button data-like-icon="${id}" class="like-icon-choice ${likeIcon === id ? "selected" : ""}" aria-pressed="${likeIcon === id}">${icon(id)}<b>${tr(label)}</b></button>`,
-            )
-            .join(
-              "",
-            )}</div><p class="language-note">${tr("iconSaved")}</p></section>`
-        : "";
-  if (settings) {
-    $("#search-area").insertAdjacentHTML("beforeend", pwaGuideHTML());
-    $("#search-area").insertAdjacentHTML("beforeend", teenSettingsHTML());
-  }
-  if (view === "market") $("#search-area").innerHTML = marketHTML();
-  if (view === "questions") $("#search-area").innerHTML = questionBoxHTML();
-  if (view === "games") $("#search-area").innerHTML = gameRoomHTML();
-  if (view === "diagnosis") $("#search-area").innerHTML = adhdCheckHTML();
-  if (view === "relationships") $("#search-area").innerHTML = relationshipsHTML();
-  if (view === "help") $("#search-area").innerHTML = helpCenterHTML();
-  $("#feed-label").textContent =
-    view === "search"
-      ? query
-        ? `${lang === "ja" ? "「" + query + "」" : query}${tr("results")}`
-        : tr("discover")
-      : view === "bookmark"
-        ? tr("savedLead")
-        : view === "user"
-          ? tr("post")
-          : tr("world");
-  let shown = posts.filter((p) => !p.parent);
-  if (teenMode) shown = shown.filter((p) => !teenRestrictedPost(p));
-  if (view === "post") {
-    const selected = posts.find((p) => p.id === selectedPostId && !teenRestrictedPost(p));
-    $("#feed").innerHTML = selected
-      ? `<section class="post-detail-toolbar"><button type="button" data-post-back aria-label="${marketText("前の画面に戻る", "Back to previous page")}">←</button><div><b>${marketText("投稿", "Post")}</b><small>${marketText("投稿と返信の詳細", "Post and reply details")}</small></div></section>${postHTML(selected, true)}<div class="reply-section-title"><b>${marketText("返信", "Replies")}</b><span>${posts.filter((p) => p.parent === selected.id && !teenRestrictedPost(p)).length}</span></div>${posts.filter((p) => p.parent === selected.id && !teenRestrictedPost(p)).map((p) => postHTML(p, true)).join("") || `<div class="empty">${marketText("まだ返信はありません。", "No replies yet.")}</div>`}`
-      : `<section class="post-detail-toolbar"><button type="button" data-post-back>←</button><b>${marketText("投稿が見つかりません", "Post not found")}</b></section>`;
-  } else {
-  if (view === "home" && tab === "following")
-    shown = shown.filter((p) => following.has(p.u) || p.u === "you");
-  if (view === "bookmark") shown = shown.filter((p) => p.saved);
-  if (view === "user") shown = shown.filter((p) => p.u === profileUser);
-  if (view === "search" && query)
-    shown = shown.filter((p) => {
-      const u = users.find((u) => u.id === p.u);
-      return (p.text + " " + u.name + " @" + u.handle)
-        .toLowerCase()
-        .includes(query.toLowerCase());
-    });
-  $("#feed").innerHTML = shown.length
-    ? shown.map(postHTML).join("")
-    : `<div class="empty">${view === "bookmark" ? tr("emptySaved") : view === "search" ? tr("emptySearch") : tr("empty")}</div>`;
-  }
-  $("#people").innerHTML = users
-    .slice(0, 3)
-    .map(
-      (u) =>
-        `<div class="person"><button data-person="${u.id}" aria-label="${u.name}">${avatar(u)}</button><span class="person-text"><b>${u.name}</b><small>@${u.handle}</small></span><button data-follow="${u.id}" class="follow ${following.has(u.id) ? "on" : ""}" aria-pressed="${following.has(u.id)}">${following.has(u.id) ? tr("followingBtn") : tr("follow")}</button></div>`,
-    )
-    .join("");
-  document.querySelectorAll("[data-tab]").forEach((b) => {
-    b.classList.toggle("active", b.dataset.tab === tab);
-    b.setAttribute("aria-pressed", b.dataset.tab === tab);
-  });
-  applyLanguage();
-  persistState();
-}
-function pollHTML(p) {
-  if (!p.poll) return "";
-  const total = p.poll.options.reduce((n, o) => n + o.votes, 0);
-  return `<div class="poll-results">${p.poll.options
-    .map((o, i) => {
-      const percent = total ? Math.round((o.votes / total) * 100) : 0;
-      return `<button data-poll-vote="${i}" data-id="${p.id}" class="poll-option ${p.poll.voted === i ? "chosen" : ""}" ${p.poll.voted !== undefined ? "disabled" : ""}><span class="poll-fill" style="width:${p.poll.voted !== undefined ? percent : 0}%"></span><b>${escape(o.text)}</b>${p.poll.voted !== undefined ? `<em>${percent}%</em>` : ""}</button>`;
-    })
-    .join("")}<small>${total} ${tr("votes")}</small></div>`;
-}
-function imageGridHTML(images, quote = false) {
-  if (!images?.length) return "";
-  return `<div class="media-grid media-count-${Math.min(images.length, 4)} ${quote ? "quote-media" : ""}">${images.map((src, i) => `<img src="${src}" alt="${tr("imagePreview")} ${i + 1}">`).join("")}</div>`;
-}
-function audioHTML(src) {
-  return src
-    ? `<div class="post-audio"><span aria-hidden="true">♪</span><audio controls preload="metadata" src="${escape(src)}"></audio></div>`
-    : "";
-}
-function postHTML(p, detail = false) {
-  const u = users.find((u) => u.id === p.u);
-  const images = p.images || (p.image ? [p.image] : []);
-  const quoteImages =
-    p.quoteOf?.images || (p.quoteOf?.image ? [p.quoteOf.image] : []);
-  const question=p.qa?`<div class="post-question"><small>${marketText('質問箱への質問','Question box')}</small><p>${escape(p.qa.text)}</p><span>${p.qa.anonymous?marketText('匿名','Anonymous'):escape(p.qa.fromName || '')}</span></div>`:'';
-  return `<article class="post ${detail ? "post-detail" : ""}" id="post-${p.id}"${detail ? "" : ` data-open-post="${p.id}"`}><button data-person="${u.id}" aria-label="${u.name}のプロフィール" style="padding:0;align-self:flex-start">${avatar(u)}</button><div class="post-body"><div class="post-head"><button data-person="${u.id}" style="padding:0"><b>${u.name}</b></button>${u.id === "sota" ? '<span class="verified" aria-label="サンプル認証済み">✦</span>' : ""}${u.mbti ? `<span class="mbti-badge compact">${escape(u.mbti)}</span>` : ""}<span class="handle">@${u.handle}</span><button type="button" class="time post-detail-link" data-open-post="${p.id}" aria-label="${marketText("投稿詳細を表示", "View post details")}">· ${p.time}</button>${p.u === "you" ? `<button class="delete" data-action="delete" data-id="${p.id}">削除</button>` : ""}</div>${p.text ? `<p class="post-content">${escape(p.text).replace(/(#[^\s#]+)/g, '<span class="tag">$1</span>')}</p>` : ""}${question}${imageGridHTML(images)}${audioHTML(p.audio)}${stockPostCardHTML(p.stock)}${p.quoteOf ? `<div class="quote-card"><small>引用元 · ${users.find((u) => u.id === p.quoteOf.u)?.name || ""}</small>${p.quoteOf.text ? `<p>${escape(p.quoteOf.text)}</p>` : ""}${imageGridHTML(quoteImages, true)}${audioHTML(p.quoteOf.audio)}</div>` : ""}${pollHTML(p)}<div class="actions">${[
-    ["reply", tr("reply"), p.replies, ""],
-    ["repeat", tr("repost"), p.reposts, p.reposted ? "reposted" : ""],
-    ["heart", tr("like"), p.likes, p.liked ? "liked" : ""],
-    ["bookmark", tr("save"), "", p.saved ? "saved" : ""],
-  ]
-    .map(
-      ([a, label, count, c]) =>
-        `<button data-action="${a}" data-id="${p.id}" class="${c}" aria-label="${label}" ${a !== "reply" ? `aria-pressed="${!!c}"` : ""}>${icon(a === "heart" ? likeIcon : a)}<span>${count || ""}</span></button>`,
-    )
-    .join("")}</div>${detail ? "" : posts
-    .filter((r) => r.parent === p.id && !teenRestrictedPost(r))
-    .map(
-      (r) =>
-        `<div style="margin-top:15px;border-left:2px solid #dbe8fd;padding-left:12px"><small>あなた · 返信</small><p class="post-content" style="margin-bottom:4px">${escape(r.text)}</p></div>`,
-    )
-    .join("")}</div></article>`;
-}
-function createPost(
-  text,
-  parent = null,
-  quoteOf = null,
-  images = [],
-  poll = null,
-  audio = null,
-  stock = null,
-) {
-  if (
-    typeof text !== "string" ||
-    (!text.trim() && !images.length && !poll && !audio && !stock) ||
-    [...text].length > 200
-  )
-    throw Error("本文、画像、または投票を追加してください。");
-  const p = {
-    id: Date.now(),
-    u: "you",
-    text: text.trim(),
-    images: images.slice(0, 4),
-    audio,
-    poll,
-    time: "たった今",
-    likes: 0,
-    replies: 0,
-    reposts: 0,
-    parent,
-    quoteOf,
-    stock,
-  };
-  if (parent) {
-    const original = posts.find((p) => p.id === parent);
-    if (!original) throw Error("ポストが見つかりません");
-    original.replies++;
-  }
-  posts.unshift(p);
-  render();
-  return p.id;
-}
-function pollInputs() {
-  return [...document.querySelectorAll("[data-poll-option]")];
-}
-function updateAddOptionButton() {
-  $("#add-poll-option").hidden = pollInputs().length >= 6;
-}
-function addPollOption() {
-  const index = pollInputs().length + 1;
-  if (index > 6) return;
-  const row = document.createElement("div");
-  row.className = "poll-extra-row";
-  row.innerHTML = `<input data-poll-option maxlength="40" placeholder="${lang === "ja" ? "選択肢" : "Option"} ${index}"><button type="button" data-remove-poll-option aria-label="${lang === "ja" ? "選択肢を削除" : "Remove option"}">×</button>`;
-  $("#extra-poll-options").append(row);
-  row.querySelector("input").oninput = updatePostButton;
-  row.querySelector("input").focus();
-  updateAddOptionButton();
-  updatePostButton();
-}
-function pollReady() {
-  const inputs = pollInputs();
-  return (
-    !$("#poll-builder").hidden &&
-    inputs.length >= 2 &&
-    inputs.every((input) => input.value.trim())
-  );
-}
-function updatePostButton() {
-  const n = [...$("#post-text").value].length;
-  $("#counter").textContent = `${n} / 200`;
-  $("#post-button").disabled =
-    (!$("#post-text").value.trim() &&
-      !composingImages.length &&
-      !composingAudio &&
-      !composingStock &&
-      !pollReady()) ||
-    n > 200;
-}
-function renderImagePreview() {
-  $("#image-preview").hidden = !composingImages.length;
-  $("#image-preview").innerHTML = composingImages
-    .map(
-      (src, i) =>
-        `<div><img src="${src}" alt="${tr("imagePreview")} ${i + 1}"><button type="button" data-remove-image="${i}" aria-label="${tr("removeImage")}">×</button></div>`,
-    )
-    .join("");
-}
-function clearImages() {
-  composingImages = [];
-  $("#post-image").value = "";
-  renderImagePreview();
-  updatePostButton();
-}
-function renderAudioPreview() {
-  $("#audio-preview").hidden = !composingAudio;
-  $("#audio-preview-player").src = composingAudio?.preview || "";
-}
-function clearAudio() {
-  if (composingAudio?.preview) URL.revokeObjectURL(composingAudio.preview);
-  composingAudio = null;
-  renderAudioPreview();
-  updatePostButton();
-}
-function selectAudio(file) {
-  if (!file) return;
-  const allowedAudio = [
-    "audio/mpeg",
-    "audio/mp4",
-    "audio/ogg",
-    "audio/wav",
-    "audio/webm",
-    "audio/x-m4a",
-    "audio/aac",
-  ];
-  if (!allowedAudio.includes(file.type)) return notify(tr("audioError"));
-  if (file.size > 15 * 1024 * 1024) return notify(tr("audioTooLarge"));
-  clearAudio();
-  composingAudio = { file, preview: URL.createObjectURL(file) };
-  renderAudioPreview();
-  updatePostButton();
-}
-function clearPoll() {
-  $("#poll-builder").hidden = true;
-  pollInputs()
-    .slice(0, 2)
-    .forEach((input) => (input.value = ""));
-  $("#extra-poll-options").innerHTML = "";
-  updateAddOptionButton();
-  updatePostButton();
-}
-function updateQuoteComposer() {
-  const box = $("#composer-quote");
-  if (!box) return;
-  box.hidden = !composingQuote;
-  if (composingQuote) {
-    const u = users.find((x) => x.id === composingQuote.u);
-    $("#composer-quote-author").textContent =
-      `${tr("quoteFrom")} · ${u?.name || ""} @${u?.handle || ""}`;
-    $("#composer-quote-text").textContent =
-      composingQuote.text ||
-      (composingQuote.audio
-        ? lang === "ja"
-          ? "音声投稿"
-          : "Audio post"
-        : lang === "ja"
-          ? "画像投稿"
-          : "Image post");
-    $("#post-button").textContent = tr("quoteButton");
-  } else {
-    $("#post-button").textContent = tr("compose");
+  .market-cap-ranking li > strong {
+    grid-column: 3;
+    text-align: left;
   }
 }
-function stockPostCardHTML(stock, compact = false) {
-  if (stock?.shared) {
-    const fmt = n => Number(n).toLocaleString(lang === "ja" ? "ja-JP" : "en-US", { maximumFractionDigits: 8 });
-    return `<div class="stock-post-card ${compact ? "compact" : ""}"><span class="stock-post-label">${marketText("クリエイターシェア · 投稿時点", "Creator Shares · at posting")}</span><b>${escape(stock.name || "Creator")}</b><div class="stock-post-values"><span>${marketText("1株価格", "Share price")}<b>${fmt(stock.price)} pt</b></span><span>${marketText("発行済み", "Issued")}<b>${fmt(stock.supply)}</b></span><span>${marketText("時価総額", "Market cap")}<b>${fmt(stock.marketCap)} pt</b></span></div></div>`;
-  }
-  if (!stock || !CreatorMarket.prices[stock.creator]) return "";
-  const user = users.find((u) => u.id === stock.creator);
-  const fmt = (n) =>
-    Number(n).toLocaleString(lang === "ja" ? "ja-JP" : "en-US");
-  return `<div class="stock-post-card ${compact ? "compact" : ""}"><span class="stock-post-label">${marketText("クリエイターシェア", "Creator Shares")}</span><div class="stock-post-owner">${avatar(user)}<span><b>${escape(user.name)}</b><small>@${escape(user.handle)}</small></span></div><div class="stock-post-values"><span>${marketText("1株価格", "Share price")}<b>${fmt(stock.price)} pt</b></span><span>${marketText("発行済み", "Issued")}<b>${fmt(stock.supply)}</b></span><span>${marketText("時価総額", "Market cap")}<b>${fmt(stock.marketCap)} pt</b></span></div></div>`;
+.market-history {
+  padding: 0;
+  list-style: none;
 }
-function updateStockComposer() {
-  const box = $("#composer-stock");
-  box.hidden = !composingStock;
-  $("#composer-stock-card").innerHTML = composingStock
-    ? stockPostCardHTML(composingStock, true)
-    : "";
-  updatePostButton();
+.market-history li {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
 }
-function openQuotePicker() {
-  $("#quote-picker-list").innerHTML = posts
-    .filter((post) => !post.parent)
-    .slice(0, 30)
-    .map((post) => {
-      const u = users.find((user) => user.id === post.u);
-      const summary =
-        post.text ||
-        (post.audio
-          ? lang === "ja"
-            ? "音声投稿"
-            : "Audio post"
-          : lang === "ja"
-            ? "画像投稿"
-            : "Image post");
-      return `<button type="button" class="quote-source" data-quote-source="${post.id}"><b>${escape(u?.name || "")} <small>@${escape(u?.handle || "")}</small></b><p>${escape(summary.slice(0, 120))}</p><small>${post.time}</small></button>`;
-    })
-    .join("");
-  $("#quote-picker-dialog").showModal();
+@media (max-width: 400px) {
+  .market-summary {
+    grid-template-columns: 1fr;
+  }
+  .creator-market {
+    padding: 20px 16px;
+  }
 }
-$("#choose-quote").onclick = openQuotePicker;
-$("#close-quote-picker").onclick = () => $("#quote-picker-dialog").close();
-$("#quote-picker-list").onclick = (event) => {
-  const button = event.target.closest("[data-quote-source]");
-  if (!button) return;
-  const original = posts.find(
-    (post) => post.id === Number(button.dataset.quoteSource),
-  );
-  if (!original) return;
-  composingQuote = {
-    u: original.u,
-    text: original.text,
-    images: original.images || [],
-    audio: original.audio || null,
-  };
-  $("#quote-picker-dialog").close();
-  updateQuoteComposer();
-  $("#post-text").focus();
-};
-$("#cancel-quote").onclick = () => {
-  composingQuote = null;
-  updateQuoteComposer();
-  notify(lang === "ja" ? "引用を取り消しました" : "Quote removed");
-};
-$("#post-text").oninput = updatePostButton;
-$("#post-image").onchange = async (e) => {
-  const files = [...(e.target.files || [])];
-  if (!files.length) return;
-  const imageFiles = files.filter((file) => file.type.startsWith("image/"));
-  const audioFiles = files.filter((file) => file.type.startsWith("audio/"));
-  if (
-    imageFiles.length + audioFiles.length !== files.length ||
-    audioFiles.length > 1
-  ) {
-    notify(
-      audioFiles.length > 1
-        ? lang === "ja"
-          ? "音声は1件まで選択できます。"
-          : "Choose one audio file."
-        : tr("imageError"),
-    );
-    e.target.value = "";
-    return;
-  }
-  if (composingImages.length + imageFiles.length > 4) {
-    notify(
-      lang === "ja"
-        ? "画像は4枚まで選択できます。"
-        : "You can add up to 4 images.",
-    );
-    e.target.value = "";
-    return;
-  }
-  if (
-    imageFiles.some(
-      (file) =>
-        !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(
-          file.type,
-        ),
-    )
-  ) {
-    notify(tr("imageError"));
-    e.target.value = "";
-    return;
-  }
-  if (imageFiles.some((file) => file.size > 5 * 1024 * 1024)) {
-    notify(tr("imageTooLarge"));
-    e.target.value = "";
-    return;
-  }
-  try {
-    const added = await Promise.all(
-      imageFiles.map(
-        (file) =>
-          new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result));
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          }),
-      ),
-    );
-    composingImages.push(...added);
-    if (audioFiles[0]) selectAudio(audioFiles[0]);
-    renderImagePreview();
-    updatePostButton();
-  } catch {
-    notify(tr("imageError"));
-  }
-  e.target.value = "";
-};
-$("#image-preview").onclick = (e) => {
-  const b = e.target.closest("[data-remove-image]");
-  if (!b) return;
-  composingImages.splice(Number(b.dataset.removeImage), 1);
-  renderImagePreview();
-  updatePostButton();
-};
-$("#remove-audio").onclick = clearAudio;
-function updateRecordingTime() {
-  const minutes = String(Math.floor(recordingSeconds / 60)).padStart(2, "0");
-  const seconds = String(recordingSeconds % 60).padStart(2, "0");
-  $("#record-time").textContent = `${minutes}:${seconds}`;
+.settings-panel {
+  padding: 38px 32px 50px;
 }
-function resetRecordingDialog() {
-  clearInterval(recordingTimer);
-  recordingTimer = null;
-  recordingSeconds = 0;
-  updateRecordingTime();
-  if (recordedAudioCandidate?.preview)
-    URL.revokeObjectURL(recordedAudioCandidate.preview);
-  recordedAudioCandidate = null;
-  $("#record-preview").hidden = true;
-  $("#record-preview").removeAttribute("src");
-  $("#record-status").textContent = tr("recordingReady");
-  $("#record-orb").classList.remove("active");
-  $("#start-recording").disabled = false;
-  $("#stop-recording").disabled = true;
-  $("#discard-recording").disabled = true;
-  $("#finish-recording").disabled = true;
+.settings-panel h2 {
+  font-size: 24px;
+  margin: 10px 0;
 }
-function closeRecordingDialog() {
-  recordingCancelled = true;
-  if (mediaRecorder?.state === "recording") mediaRecorder.stop();
-  recordingStream?.getTracks().forEach((track) => track.stop());
-  recordingStream = null;
-  resetRecordingDialog();
-  $("#record-dialog").close();
+.settings-panel > p {
+  color: #6f8093;
+  font-size: 14px;
+  line-height: 1.7;
 }
-$("#record-audio").onclick = () => {
-  resetRecordingDialog();
-  applyLanguage();
-  $("#record-dialog").showModal();
-};
-$("#start-recording").onclick = async () => {
-  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder)
-    return notify(tr("audioUnavailable"));
-  if (mediaRecorder?.state === "paused") {
-    mediaRecorder.resume();
-    recordingTimer = setInterval(() => {
-      recordingSeconds += 1;
-      updateRecordingTime();
-    }, 1000);
-    $("#record-status").textContent = tr("recordingNow");
-    $("#record-orb").classList.add("active");
-    $("#start-recording").disabled = true;
-    $("#stop-recording").disabled = false;
-    applyLanguage();
-    return;
-  }
-  try {
-    recordingCancelled = false;
-    recordingStream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-    });
-    recordingChunks = [];
-    mediaRecorder = new MediaRecorder(
-      recordingStream,
-      MediaRecorder.isTypeSupported("audio/webm")
-        ? { mimeType: "audio/webm" }
-        : undefined,
-    );
-    mediaRecorder.ondataavailable = (event) =>
-      event.data.size && recordingChunks.push(event.data);
-    mediaRecorder.onstop = () => {
-      const type = mediaRecorder?.mimeType || "audio/webm";
-      recordingStream?.getTracks().forEach((track) => track.stop());
-      recordingStream = null;
-      mediaRecorder = null;
-      clearInterval(recordingTimer);
-      recordingTimer = null;
-      $("#record-orb").classList.remove("active");
-      if (recordingCancelled) return;
-      const file = new File(recordingChunks, "voice-post.webm", { type });
-      selectAudio(file);
-      resetRecordingDialog();
-      $("#record-dialog").close();
-    };
-    mediaRecorder.start();
-    recordingSeconds = 0;
-    updateRecordingTime();
-    recordingTimer = setInterval(() => {
-      recordingSeconds += 1;
-      updateRecordingTime();
-    }, 1000);
-    $("#record-status").textContent = tr("recordingNow");
-    $("#record-orb").classList.add("active");
-    $("#start-recording").disabled = true;
-    $("#stop-recording").disabled = false;
-    $("#discard-recording").disabled = false;
-    $("#finish-recording").disabled = false;
-  } catch {
-    notify(tr("audioUnavailable"));
-  }
-};
-$("#stop-recording").onclick = () => {
-  if (mediaRecorder?.state === "recording") mediaRecorder.pause();
-  clearInterval(recordingTimer);
-  recordingTimer = null;
-  $("#record-status").textContent = tr("recordingPaused");
-  $("#record-orb").classList.remove("active");
-  $("#start-recording").disabled = false;
-  $("#stop-recording").disabled = true;
-  applyLanguage();
-};
-$("#finish-recording").onclick = () => {
-  if (mediaRecorder && ["recording", "paused"].includes(mediaRecorder.state)) {
-    $("#finish-recording").disabled = true;
-    $("#stop-recording").disabled = true;
-    $("#start-recording").disabled = true;
-    mediaRecorder.stop();
-  }
-};
-$("#discard-recording").onclick = () => {
-  recordingCancelled = true;
-  if (mediaRecorder && ["recording", "paused"].includes(mediaRecorder.state))
-    mediaRecorder.stop();
-  recordingStream?.getTracks().forEach((track) => track.stop());
-  recordingStream = null;
-  mediaRecorder = null;
-  resetRecordingDialog();
-};
-$("#close-record-dialog").onclick = closeRecordingDialog;
-$("#record-dialog").addEventListener("cancel", (event) => {
-  event.preventDefault();
-  closeRecordingDialog();
-});
-$("#add-poll").onclick = () => {
-  $("#poll-builder").hidden = false;
-  updatePostButton();
-  $("#poll-option-1").focus();
-};
-$("#remove-poll").onclick = clearPoll;
-$("#add-poll-option").onclick = addPollOption;
-$("#poll-option-1").oninput = $("#poll-option-2").oninput = updatePostButton;
-$("#extra-poll-options").onclick = (e) => {
-  const b = e.target.closest("[data-remove-poll-option]");
-  if (!b) return;
-  b.closest(".poll-extra-row").remove();
-  pollInputs().forEach(
-    (input, i) =>
-      (input.placeholder = `${lang === "ja" ? "選択肢" : "Option"} ${i + 1}`),
-  );
-  updateAddOptionButton();
-  updatePostButton();
-};
-async function uploadImages(images) {
-  if (!images.length) return [];
-  const form = new FormData();
-  for (const src of images) {
-    const blob = await (await fetch(src)).blob();
-    form.append("images", blob, "image");
-  }
-  const response = await fetch("/api/media", { method: "POST", body: form });
-  if (!response.ok) throw Error("upload failed");
-  const data = await response.json();
-  return data.urls;
+.language-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 28px 0 18px;
 }
-async function uploadAudio(audio) {
-  if (!audio) return null;
-  const form = new FormData();
-  form.append("audio", audio.file, audio.file.name || "voice-post.webm");
-  const response = await fetch("/api/media", { method: "POST", body: form });
-  if (!response.ok) throw Error("audio upload failed");
-  return (await response.json()).url;
+.language-choice {
+  border: 1px solid #dfe7f1;
+  border-radius: 14px;
+  padding: 20px;
+  text-align: left;
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  column-gap: 12px;
+  align-items: center;
 }
-$("#post-form").onsubmit = async (e) => {
-  e.preventDefault();
-  const quote = composingQuote
-    ? {
-        u: composingQuote.u,
-        text: composingQuote.text,
-        images: composingQuote.images || [],
-        audio: composingQuote.audio || null,
-      }
-    : null;
-  const poll = $("#poll-builder").hidden
-    ? null
-    : {
-        options: pollInputs()
-          .map((input) => input.value.trim())
-          .map((text) => ({ text, votes: 0 })),
-      };
-  if (poll && poll.options.some((o) => !o.text)) {
-    notify(tr("pollError"));
-    return;
-  }
-  const button = $("#post-button");
-  button.disabled = true;
-  let uploadedImages, uploadedAudio;
-  try {
-    uploadedImages = await uploadImages(composingImages);
-    uploadedAudio = await uploadAudio(composingAudio);
-  } catch {
-    notify(
-      lang === "ja"
-        ? "メディアを保存できませんでした。もう一度お試しください。"
-        : "Could not save media. Please try again.",
-    );
-    updatePostButton();
-    return;
-  }
-  createPost(
-    $("#post-text").value,
-    null,
-    quote,
-    uploadedImages,
-    poll,
-    uploadedAudio,
-    composingStock,
-  );
-  $("#post-text").value = "";
-  composingQuote = null;
-  composingStock = null;
-  clearImages();
-  clearAudio();
-  clearPoll();
-  updateQuoteComposer();
-  updateStockComposer();
-  updatePostButton();
-  notify(
-    quote
-      ? lang === "ja"
-        ? "引用リツイートしました"
-        : "Quote reposted"
-      : lang === "ja"
-        ? "ポストしました"
-        : "Posted",
-  );
-};
-$("#cancel-stock").onclick = () => {
-  composingStock = null;
-  updateStockComposer();
-  notify(marketText("シェア情報の添付を取り消しました", "Creator Shares removed"));
-};
-$("#compose-nav").onclick = () => {
-  navigate("home");
-  $("#post-text").focus();
-};
-$("#account").onclick = () => navigate("user");
-$(".brand").onclick = (e) => {
-  e.preventDefault();
-  navigate("home");
-};
-$("#right-search").onsubmit = (e) => {
-  e.preventDefault();
-  query = new FormData(e.target).get("q").trim();
-  navigate("search");
-};
-document.addEventListener("submit", (e) => {
-  if (e.target.id === "help-search") {
-    e.preventDefault();
-    helpQuery = String(new FormData(e.target).get("q") || "").trim();
-    render();
-    return;
-  }
-  if (e.target.id === "relationship-form") {
-    e.preventDefault();
-    const data = new FormData(e.target);
-    const person = String(data.get("person") || "").trim();
-    const type = String(data.get("type") || "friend");
-    const custom = String(data.get("custom") || "").trim();
-    const note = String(data.get("note") || "").trim();
-    if (!person) return;
-    if (type === "custom" && !custom) {
-      notify(marketText("その他の関係名を入力してください", "Enter a custom relationship name"));
-      return;
-    }
-    const duplicate = relationships.some((item) => item.person.toLocaleLowerCase() === person.toLocaleLowerCase() && item.type === type && (item.custom || "").toLocaleLowerCase() === custom.toLocaleLowerCase());
-    if (duplicate) {
-      notify(marketText("同じ名前と関係は登録済みです", "This name and relationship already exist"));
-      return;
-    }
-    relationships.push({ id: Date.now(), person, type, custom, note, fictional: data.get("fictional") === "on" });
-    persistState();
-    render();
-    notify(marketText("交友関係に追加しました", "Relationship added"));
-    return;
-  }
-  if (e.target.id === "inner-search") {
-    e.preventDefault();
-    query = new FormData(e.target).get("q").trim();
-    render();
-  }
-  if (e.target.id === "adhd-check-form") {
-    e.preventDefault();
-    const data=new FormData(e.target),answers=Array.from({length:6},(_,i)=>Number(data.get(`q${i}`))),frequent=answers.filter(v=>v>=2).length,total=answers.reduce((a,b)=>a+b,0),result=$("#adhd-result");
-    const high=frequent>=4;
-    result.innerHTML=lang==="ja"
-      ? `<b>${high?'困りごとが多く示されました':'高頻度の回答は少なめでした'}</b><p>「よくある・とてもよくある」：${frequent}/6項目（回答スコア ${total}/18）</p><p>${high?'学校・仕事・生活への影響が続いている場合は、医師や心理職などへの相談を検討してください。':'この結果だけでADHDの有無は判断できません。困りごとがある場合は結果にかかわらず専門家へ相談できます。'}</p>`
-      : `<b>${high?'Several difficulties were reported':'Few items were reported frequently'}</b><p>Often or very often: ${frequent}/6 items (response score ${total}/18)</p><p>${high?'If these experiences continue to affect school, work, or daily life, consider talking with a qualified healthcare professional.':'This result cannot determine whether ADHD is present. You can seek professional advice whenever these experiences concern you.'}</p>`;
-    result.hidden=false;result.scrollIntoView({behavior:'smooth',block:'nearest'});
-  }
-});
-document.addEventListener("click", async (e) => {
-  const b = e.target.closest("[data-poll-vote]");
-  if (!b) return;
-  const p = posts.find((p) => p.id === Number(b.dataset.id));
-  const choice = Number(b.dataset.pollVote);
-  if (!p?.poll || p.poll.voted !== undefined || !p.poll.options[choice]) return;
-  p.poll.options[choice].votes++;
-  p.poll.voted = choice;
-  render();
-  notify(lang === "ja" ? "投票しました" : "Vote submitted");
-});
-document.addEventListener("click", async (e) => {
-  const postTarget = e.target.closest("[data-open-post]");
-  if (postTarget && !e.target.closest("button, a, input, select, textarea, audio, label")) {
-    openPostDetail(postTarget.dataset.openPost);
-    return;
-  }
-  const b = e.target.closest("button");
-  if (!b) return;
-  if (b.dataset.openPost) {
-    openPostDetail(b.dataset.openPost);
-    return;
-  }
-  if (b.hasAttribute("data-post-back")) {
-    selectedPostId = null;
-    navigate(postReturnView === "post" ? "home" : postReturnView);
-    return;
-  }
-  if (b.dataset.deleteRelationship) {
-    relationships = relationships.filter((item) => item.id !== Number(b.dataset.deleteRelationship));
-    persistState();
-    render();
-    notify(marketText("交友関係から削除しました", "Relationship deleted"));
-    return;
-  }
-  if (b.hasAttribute("data-install-pwa")) {
-    if (!pwaInstallPrompt) return;
-    await pwaInstallPrompt.prompt();
-    await pwaInstallPrompt.userChoice;
-    pwaInstallPrompt = null;
-    render();
-    return;
-  }
-  if (b.dataset.view) {
-    if (b.dataset.view === "search") query = "";
-    navigate(b.dataset.view);
-  }
-  if (b.dataset.language) {
-    lang = b.dataset.language;
-    try {
-      localStorage.setItem("blue-language", lang);
-    } catch {}
-    render();
-    notify(lang === "ja" ? "日本語に変更しました" : "Changed to English");
-  }
-  if (b.dataset.themeChoice) {
-    theme = b.dataset.themeChoice;
-    applyTheme();
-    try {
-      localStorage.setItem("blue-theme", theme);
-    } catch {}
-    render();
-    const names =
-      lang === "ja"
-        ? {
-            light: "ライト",
-            dark: "ダーク",
-            darkblue: "ダークブルー",
-            lightorange: "ライトオレンジ",
-            mint: "ミント",
-            monochrome: "モノクローム",
-            system: "システム",
-          }
-        : {
-            light: "Light",
-            dark: "Dark",
-            darkblue: "Dark Blue",
-            lightorange: "Light Orange",
-            mint: "Mint",
-            monochrome: "Monochrome",
-            system: "System",
-          };
-    notify(
-      lang === "ja"
-        ? `${names[theme]}に変更しました`
-        : `${names[theme]} enabled`,
-    );
-  }
-  if (b.dataset.likeIcon) {
-    likeIcon = b.dataset.likeIcon;
-    try {
-      localStorage.setItem("blue-like-icon", likeIcon);
-    } catch {}
-    render();
-    notify(
-      lang === "ja" ? "いいねアイコンを変更しました" : "Like icon changed",
-    );
-  }
-  if (b.hasAttribute("data-private-account")) {
-    accountPrivate = !accountPrivate;
-    render();
-    notify(accountPrivate ? tr("privacySaved") : tr("privacyRemoved"));
-    return;
-  }
-  if (b.hasAttribute("data-edit-profile")) {
-    const self = users.find((u) => u.id === "you");
-    $("#profile-name").value = self.name;
-    $("#profile-handle").value = self.handle;
-    $("#profile-bio").value = self.bio;
-    $("#profile-mbti").value = self.mbti || "";
-    $("#profile-error").textContent = "";
-    $("#profile-dialog").showModal();
-    $("#profile-name").focus();
-    return;
-  }
-  if (b.dataset.person) navigate("user", b.dataset.person);
-  if (b.dataset.tab) {
-    tab = b.dataset.tab;
-    render();
-  }
-  if (b.dataset.follow) {
-    const id = b.dataset.follow;
-    following.has(id) ? following.delete(id) : following.add(id);
-    render();
-  }
-  if (b.dataset.trend) {
-    query = b.dataset.trend;
-    navigate("search");
-  }
-  if (b.dataset.action) {
-    const p = posts.find((p) => p.id === Number(b.dataset.id));
-    if (!p) return;
-    switch (b.dataset.action) {
-      case "heart":
-        p.liked = !p.liked;
-        p.likes += p.liked ? 1 : -1;
-        break;
-      case "repeat":
-        repostTo = p.id;
-        $("#repost-context").textContent =
-          `${users.find((u) => u.id === p.u).name}さんのポスト\n${p.text}`;
-        $("#repost-dialog").showModal();
-        return;
-      case "bookmark":
-        p.saved = !p.saved;
-        notify(
-          p.saved ? "ブックマークに保存しました" : "ブックマークを解除しました",
-        );
-        break;
-      case "delete":
-        if (confirm("このポストを削除しますか？")) {
-          posts = posts.filter((x) => x.id !== p.id && x.parent !== p.id);
-          if (view === "post" && selectedPostId === p.id) {
-            selectedPostId = null;
-            view = postReturnView === "post" ? "home" : postReturnView;
-          }
-        }
-        break;
-      case "reply":
-        replyTo = p.id;
-        $("#reply-context").textContent =
-          `${users.find((u) => u.id === p.u).name}さんへ返信\n${p.text}`;
-        $("#reply-dialog").showModal();
-        $("#reply-text").focus();
-        return;
-    }
-    render();
-  }
-});
-document.addEventListener("click", (e) => {
-  const b = e.target.closest("[data-repost-mode]");
-  if (!b) return;
-  const mode = b.dataset.repostMode;
-  if (mode === "plain") {
-    const original = posts.find((x) => x.id === repostTo);
-    if (original) {
-      original.reposted = !original.reposted;
-      original.reposts += original.reposted ? 1 : -1;
-      notify(
-        original.reposted ? "リツイートしました" : "リツイートを取り消しました",
-      );
-    }
-    $("#repost-dialog").close();
-    render();
-  } else {
-    const original = posts.find((x) => x.id === repostTo);
-    if (!original) return;
-    composingQuote = {
-      u: original.u,
-      text: original.text,
-      images: original.images || (original.image ? [original.image] : []),
-      audio: original.audio || null,
-    };
-    $("#repost-dialog").close();
-    navigate("home");
-    updateQuoteComposer();
-    $("#post-text").focus();
-    notify("コメントを入力してください");
-  }
-});
-$("#profile-form").onsubmit = (e) => {
-  e.preventDefault();
-  const name = $("#profile-name").value.trim(),
-    handle = $("#profile-handle").value.trim().replace(/^@/, "").toLowerCase(),
-    bio = $("#profile-bio").value.trim(),
-    mbti = $("#profile-mbti").value;
-  if (!name || [...name].length > 10 || !/^[a-z0-9_]{1,25}$/.test(handle)) {
-    $("#profile-error").textContent = tr("profileError");
-    return;
-  }
-  if (mbti && !/^(I|E)(N|S)(T|F)(J|P)$/.test(mbti)) {
-    $("#profile-error").textContent = tr("profileError");
-    return;
-  }
-  if (users.some((u) => u.id !== "you" && u.handle.toLowerCase() === handle)) {
-    $("#profile-error").textContent = tr("handleTaken");
-    return;
-  }
-  const self = users.find((u) => u.id === "you");
-  Object.assign(self, {
-    name,
-    handle,
-    bio,
-    mbti,
-    initial: [...name][0]?.toUpperCase() || "Y",
-  });
-  try {
-    localStorage.setItem("blue-profile", JSON.stringify({ name, handle, bio, mbti }));
-  } catch {}
-  $("#profile-dialog").close();
-  render();
-  persistState();
-  notify(tr("profileSaved"));
-};
-$("#close-profile").onclick = $("#cancel-profile").onclick = () =>
-  $("#profile-dialog").close();
-$("#close-repost").onclick = () => $("#repost-dialog").close();
-$("#reply-form").onsubmit = (e) => {
-  e.preventDefault();
-  if (!$("#reply-text").value.trim()) return;
-  createPost($("#reply-text").value, replyTo);
-  $("#reply-text").value = "";
-  $("#reply-dialog").close();
-  notify("返信しました");
-};
-$("#close-dialog").onclick = () => $("#reply-dialog").close();
-$("#search-icon").innerHTML = icon("search");
-$("#trends").innerHTML = [
-  ["暮らし・日常", "#日々のこと", "1,284"],
-  ["クリエイティブ", "#デザイン", "856"],
-  ["好きなこと", "#音楽のある暮らし", "642"],
-]
-  .map(
-    ([c, t, n]) =>
-      `<button class="trend" data-trend="${t}"><small>${c}</small><b>${t}</b><em>${n} 件のポスト · サンプル</em></button>`,
-  )
-  .join("");
-render();
-if (document.modelContext?.registerTool) {
-  try {
-    Promise.resolve(
-      document.modelContext.registerTool({
-        name: "create_demo_post",
-        description: "Blueにポストを作成し、サーバーへ保存する。",
-        inputSchema: {
-          type: "object",
-          properties: {
-            text: { type: "string", minLength: 1, maxLength: 200 },
-          },
-          required: ["text"],
-          additionalProperties: false,
-        },
-        annotations: { readOnlyHint: false },
-        execute(input) {
-          if (!input || typeof input.text !== "string")
-            throw Error("text is required");
-          navigate("home");
-          tab = "all";
-          const id = createPost(input.text);
-          return { id, status: "created_and_saved" };
-        },
-      }),
-    ).catch(() => {});
-  } catch {}
+.language-choice > span {
+  grid-row: 1/3;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #edf4ff;
+  color: var(--blue);
+  font-weight: 800;
 }
+.language-choice b {
+  font-size: 15px;
+}
+.language-choice small {
+  color: #8290a0;
+}
+.language-choice.selected {
+  border: 2px solid var(--blue);
+  background: #f5f9ff;
+  padding: 19px;
+}
+.language-note {
+  font-size: 12px !important;
+  color: #8a97a5 !important;
+}
+.privacy-panel {
+  padding-bottom: 0;
+}
+.privacy-setting {
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+}
+.privacy-setting > span {
+  display: grid;
+  gap: 6px;
+}
+.privacy-setting > span b {
+  font-size: 15px;
+}
+.privacy-setting > span small {
+  max-width: 420px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.privacy-switch {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 42px auto;
+  align-items: center;
+  gap: 9px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.privacy-switch > span {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: #bdc7d4;
+  transition: background 0.2s ease;
+}
+.privacy-switch > span::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px #0003;
+  transition: transform 0.2s ease;
+}
+.privacy-switch.on {
+  color: var(--blue);
+}
+.privacy-switch.on > span {
+  background: var(--blue);
+}
+.privacy-switch.on > span::after {
+  transform: translateX(18px);
+}
+.lock-badge {
+  font-size: 14px;
+  vertical-align: 2px;
+}
+@media (max-width: 600px) {
+  .settings-panel {
+    padding: 30px 20px;
+  }
+  .language-options {
+    grid-template-columns: 1fr;
+  }
+  .privacy-setting {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+.settings-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 36px 0;
+}
+.teen-settings { margin-top: 16px; }.teen-status { display: flex; align-items: center; gap: 13px; margin: 18px 0; padding: 15px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }.teen-status > span { display: grid; place-items: center; flex: 0 0 36px; height: 36px; border-radius: 50%; background: var(--line); color: var(--muted); font-weight: 900; }.teen-status.on { border-color: color-mix(in srgb,var(--blue) 48%,var(--line)); background: color-mix(in srgb,var(--blue) 7%,var(--surface)); }.teen-status.on > span { background: var(--blue); color: #fff; }.teen-status div { display: grid; gap: 4px; }.teen-status small,.teen-note { color: var(--muted); line-height: 1.5; }.teen-settings form { display: flex; align-items: end; gap: 10px; }.teen-settings form label { display: grid; flex: 1; gap: 7px; font-weight: 700; }.teen-settings form input { min-height: 44px; }.teen-settings form button { min-height: 44px; }.teen-note { margin: 14px 0 0; font-size: .84rem; }
+@media (max-width:600px) { .teen-settings form { align-items: stretch; flex-direction: column; } }
+.theme-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 24px 0 18px;
+}
+.theme-choice {
+  border: 1px solid #dfe7f1;
+  border-radius: 14px;
+  padding: 12px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.theme-choice.selected {
+  border: 2px solid var(--blue);
+  padding: 11px;
+  background: #f5f9ff;
+}
+.theme-preview {
+  width: 62px;
+  height: 42px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  border: 1px solid #d8e0e9;
+}
+.light-preview {
+  background: #fff;
+  color: #f2a900;
+}
+.dark-preview {
+  background: #152235;
+  color: #d8e5ff;
+  border-color: #2b3d55;
+}
+.theme-choice b {
+  font-size: 14px;
+}
+html[data-theme="dark"] {
+  --ink: #edf3fa;
+  --muted: #94a3b5;
+  --line: #27364a;
+  --pale: #152235;
+  color-scheme: dark;
+}
+html[data-theme="dark"] body {
+  background: #0e1826;
+  color: var(--ink);
+}
+html[data-theme="dark"] .left,
+html[data-theme="dark"] main,
+html[data-theme="dark"] header,
+html[data-theme="dark"] .post,
+html[data-theme="dark"] .composer {
+  background: #0e1826;
+}
+html[data-theme="dark"] .demo-banner,
+html[data-theme="dark"] .feed-label {
+  background: #121f30;
+  color: #93a7bd;
+}
+html[data-theme="dark"] .search-box {
+  background: #182638;
+}
+html[data-theme="dark"] .welcome {
+  background: #172b46;
+}
+html[data-theme="dark"] .welcome h2 {
+  color: #b8d5ff;
+}
+html[data-theme="dark"] .welcome p,
+html[data-theme="dark"] .settings-panel > p {
+  color: #9eb1c7;
+}
+html[data-theme="dark"] .side-card,
+html[data-theme="dark"] dialog,
+html[data-theme="dark"] .quote-card,
+html[data-theme="dark"] .composer-quote {
+  background: #121f30;
+  border-color: #2a3a4f;
+  color: var(--ink);
+}
+html[data-theme="dark"] .profile-card {
+  background: linear-gradient(135deg, #172b46, #0e1826);
+}
+html[data-theme="dark"] nav button.selected {
+  background: #172b46;
+}
+html[data-theme="dark"] .language-choice,
+html[data-theme="dark"] .theme-choice {
+  border-color: #2a3a4f;
+}
+html[data-theme="dark"] .language-choice.selected,
+html[data-theme="dark"] .theme-choice.selected {
+  background: #172b46;
+  border-color: #5e9cff;
+}
+html[data-theme="dark"] .language-choice > span {
+  background: #223a59;
+}
+html[data-theme="dark"] .repost-choice {
+  border-color: #2a3a4f;
+  color: #bdd6f5;
+}
+html[data-theme="dark"] .repost-choice:hover {
+  background: #172b46;
+}
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] input {
+  color: #edf3fa;
+}
+html[data-theme="dark"] .quote-card p,
+html[data-theme="dark"] .composer-quote p {
+  color: #c0cee0;
+}
+@media (max-width: 600px) {
+  html[data-theme="dark"] .left {
+    background: #0e1826ed;
+  }
+  .theme-options {
+    grid-template-columns: 1fr;
+  }
+}
+.darkblue-preview {
+  background: #071b44;
+  color: #4e91ff;
+  border-color: #2857a0;
+}
+.system-preview {
+  background: linear-gradient(90deg, #fff 50%, #152235 50%);
+  color: #6382aa;
+}
+html[data-theme="darkblue"] {
+  --ink: #eff5ff;
+  --muted: #9cb3d4;
+  --line: #1d4179;
+  --pale: #0b2859;
+  color-scheme: dark;
+}
+html[data-theme="darkblue"] body {
+  background: #061a3a;
+  color: var(--ink);
+}
+html[data-theme="darkblue"] .left,
+html[data-theme="darkblue"] main,
+html[data-theme="darkblue"] header,
+html[data-theme="darkblue"] .post,
+html[data-theme="darkblue"] .composer {
+  background: #061a3a;
+}
+html[data-theme="darkblue"] .demo-banner,
+html[data-theme="darkblue"] .feed-label {
+  background: #0a2550;
+  color: #a9c2e7;
+}
+html[data-theme="darkblue"] .search-box {
+  background: #0d2a58;
+}
+html[data-theme="darkblue"] .welcome {
+  background: #0b3069;
+}
+html[data-theme="darkblue"] .welcome h2 {
+  color: #d6e6ff;
+}
+html[data-theme="darkblue"] .welcome p,
+html[data-theme="darkblue"] .settings-panel > p {
+  color: #adc4e4;
+}
+html[data-theme="darkblue"] .side-card,
+html[data-theme="darkblue"] dialog,
+html[data-theme="darkblue"] .quote-card,
+html[data-theme="darkblue"] .composer-quote {
+  background: #09234d;
+  border-color: #1d4179;
+  color: var(--ink);
+}
+html[data-theme="darkblue"] .profile-card {
+  background: linear-gradient(135deg, #0c326d, #061a3a);
+}
+html[data-theme="darkblue"] nav button.selected {
+  background: #0c326d;
+}
+html[data-theme="darkblue"] .language-choice,
+html[data-theme="darkblue"] .theme-choice {
+  border-color: #1d4179;
+}
+html[data-theme="darkblue"] .language-choice.selected,
+html[data-theme="darkblue"] .theme-choice.selected {
+  background: #0c326d;
+  border-color: #62a1ff;
+}
+html[data-theme="darkblue"] .language-choice > span {
+  background: #123d7a;
+}
+html[data-theme="darkblue"] .repost-choice {
+  border-color: #1d4179;
+  color: #c8ddff;
+}
+html[data-theme="darkblue"] .repost-choice:hover {
+  background: #0c326d;
+}
+html[data-theme="darkblue"] textarea,
+html[data-theme="darkblue"] input {
+  color: #eff5ff;
+}
+html[data-theme="darkblue"] .quote-card p,
+html[data-theme="darkblue"] .composer-quote p {
+  color: #c9dafa;
+}
+@media (max-width: 600px) {
+  html[data-theme="darkblue"] .left {
+    background: #061a3aed;
+  }
+}
+.orange-preview {
+  background: #fff1df;
+  color: #ef7d22;
+  border-color: #ffc98f;
+}
+.mint-preview {
+  background: #e4f8f0;
+  color: #17886c;
+  border-color: #9dddc9;
+}
+html[data-theme="lightorange"] {
+  --blue: #e96f18;
+  --ink: #3c2a20;
+  --muted: #897266;
+  --line: #f0d8c6;
+  --pale: #fff5eb;
+  color-scheme: light;
+}
+html[data-theme="lightorange"] body {
+  background: #fffaf5;
+  color: var(--ink);
+}
+html[data-theme="lightorange"] .left,
+html[data-theme="lightorange"] main,
+html[data-theme="lightorange"] header,
+html[data-theme="lightorange"] .post,
+html[data-theme="lightorange"] .composer {
+  background: #fffaf5;
+}
+html[data-theme="lightorange"] .demo-banner,
+html[data-theme="lightorange"] .feed-label {
+  background: #fff1e3;
+  color: #8a6248;
+}
+html[data-theme="lightorange"] .search-box {
+  background: #fff0e2;
+}
+html[data-theme="lightorange"] .welcome {
+  background: #ffe8d1;
+}
+html[data-theme="lightorange"] .welcome h2 {
+  color: #a8460d;
+}
+html[data-theme="lightorange"] .welcome p,
+html[data-theme="lightorange"] .settings-panel > p {
+  color: #8b654d;
+}
+html[data-theme="lightorange"] .side-card,
+html[data-theme="lightorange"] dialog,
+html[data-theme="lightorange"] .quote-card,
+html[data-theme="lightorange"] .composer-quote {
+  background: #fffdfb;
+  border-color: #f0d8c6;
+  color: var(--ink);
+}
+html[data-theme="lightorange"] .profile-card {
+  background: linear-gradient(135deg, #ffe8d1, #fffaf5);
+}
+html[data-theme="lightorange"] nav button.selected,
+html[data-theme="lightorange"] .language-choice.selected,
+html[data-theme="lightorange"] .theme-choice.selected {
+  background: #fff0e2;
+  border-color: #e96f18;
+}
+html[data-theme="lightorange"] .language-choice > span {
+  background: #ffe4ca;
+  color: #d55b0b;
+}
+html[data-theme="lightorange"] .avatar.me {
+  background: #ffe4ca;
+  color: #d55b0b;
+}
+@media (max-width: 600px) {
+  html[data-theme="lightorange"] .left {
+    background: #fffaf5ed;
+  }
+}
+html[data-theme="mint"] {
+  --blue: #14876d;
+  --ink: #18382f;
+  --muted: #65847b;
+  --line: #cce8df;
+  --pale: #eaf8f3;
+  color-scheme: light;
+}
+html[data-theme="mint"] body {
+  background: #f7fffc;
+  color: var(--ink);
+}
+html[data-theme="mint"] .left,
+html[data-theme="mint"] main,
+html[data-theme="mint"] header,
+html[data-theme="mint"] .post,
+html[data-theme="mint"] .composer {
+  background: #f7fffc;
+}
+html[data-theme="mint"] .demo-banner,
+html[data-theme="mint"] .feed-label {
+  background: #e8f8f2;
+  color: #567b70;
+}
+html[data-theme="mint"] .search-box {
+  background: #e7f6f1;
+}
+html[data-theme="mint"] .welcome {
+  background: #dff5ed;
+}
+html[data-theme="mint"] .welcome h2 {
+  color: #126b58;
+}
+html[data-theme="mint"] .welcome p,
+html[data-theme="mint"] .settings-panel > p {
+  color: #557c70;
+}
+html[data-theme="mint"] .side-card,
+html[data-theme="mint"] dialog,
+html[data-theme="mint"] .quote-card,
+html[data-theme="mint"] .composer-quote {
+  background: #fbfffd;
+  border-color: #cce8df;
+  color: var(--ink);
+}
+html[data-theme="mint"] .profile-card {
+  background: linear-gradient(135deg, #dff5ed, #f7fffc);
+}
+html[data-theme="mint"] nav button.selected,
+html[data-theme="mint"] .language-choice.selected,
+html[data-theme="mint"] .theme-choice.selected {
+  background: #e4f7f0;
+  border-color: #14876d;
+}
+html[data-theme="mint"] .language-choice > span {
+  background: #d5f1e7;
+  color: #14876d;
+}
+html[data-theme="mint"] .avatar.me {
+  background: #d5f1e7;
+  color: #14876d;
+}
+@media (max-width: 600px) {
+  html[data-theme="mint"] .left {
+    background: #f7fffced;
+  }
+}
+.monochrome-preview {
+  background: linear-gradient(135deg, #f5f5f5 50%, #707070 50%);
+  color: #333;
+  border-color: #aaa;
+}
+html[data-theme="monochrome"] {
+  --blue: #555;
+  --ink: #292929;
+  --muted: #767676;
+  --line: #d4d4d4;
+  --pale: #ededed;
+  color-scheme: light;
+}
+html[data-theme="monochrome"] body {
+  background: #f5f5f5;
+  color: var(--ink);
+}
+html[data-theme="monochrome"] .left,
+html[data-theme="monochrome"] main,
+html[data-theme="monochrome"] header,
+html[data-theme="monochrome"] .post,
+html[data-theme="monochrome"] .composer {
+  background: #f5f5f5;
+}
+html[data-theme="monochrome"] .demo-banner,
+html[data-theme="monochrome"] .feed-label {
+  background: #e9e9e9;
+  color: #686868;
+}
+html[data-theme="monochrome"] .search-box {
+  background: #e5e5e5;
+}
+html[data-theme="monochrome"] .welcome {
+  background: #dedede;
+}
+html[data-theme="monochrome"] .welcome h2 {
+  color: #333;
+}
+html[data-theme="monochrome"] .welcome p,
+html[data-theme="monochrome"] .settings-panel > p {
+  color: #666;
+}
+html[data-theme="monochrome"] .welcome-mark {
+  color: #c4c4c4;
+}
+html[data-theme="monochrome"] .side-card,
+html[data-theme="monochrome"] dialog,
+html[data-theme="monochrome"] .quote-card,
+html[data-theme="monochrome"] .composer-quote {
+  background: #fafafa;
+  border-color: #d0d0d0;
+  color: var(--ink);
+}
+html[data-theme="monochrome"] .profile-card {
+  background: linear-gradient(135deg, #dedede, #f5f5f5);
+}
+html[data-theme="monochrome"] nav button.selected,
+html[data-theme="monochrome"] .language-choice.selected,
+html[data-theme="monochrome"] .theme-choice.selected {
+  background: #e2e2e2;
+  border-color: #555;
+}
+html[data-theme="monochrome"] .language-choice > span,
+html[data-theme="monochrome"] .avatar.me {
+  background: #d8d8d8;
+  color: #444;
+}
+html[data-theme="monochrome"] .actions .liked,
+html[data-theme="monochrome"] .actions .reposted,
+html[data-theme="monochrome"] .actions .saved {
+  color: #444;
+}
+html[data-theme="monochrome"] .actions .liked svg {
+  fill: #666;
+}
+html[data-theme="monochrome"] .tag,
+html[data-theme="monochrome"] .verified {
+  color: #555;
+}
+@media (max-width: 600px) {
+  html[data-theme="monochrome"] .left {
+    background: #f5f5f5ed;
+  }
+}
+.like-icon-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 24px 0 18px;
+}
+.like-icon-choice {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+.like-icon-choice svg {
+  width: 24px;
+  height: 24px;
+}
+.like-icon-choice b {
+  font-size: 14px;
+}
+.like-icon-choice.selected {
+  border: 2px solid var(--blue);
+  padding: 14px;
+  background: var(--pale);
+  color: var(--blue);
+}
+@media (max-width: 600px) {
+  .like-icon-options {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.user-results {
+  border-top: 1px solid var(--line);
+  padding: 22px 26px 8px;
+}
+.user-results h2 {
+  font-size: 14px;
+  margin: 0 0 14px;
+}
+.user-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 0;
+  border-top: 1px solid var(--line);
+}
+.user-result:first-of-type {
+  border-top: 0;
+}
+.user-result-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  min-width: 0;
+  flex: 1;
+}
+.user-result-main > span:last-child {
+  min-width: 0;
+  display: block;
+}
+.user-result-main b {
+  display: block;
+  font-size: 14px;
+}
+.user-result-main small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin: 3px 0 6px;
+}
+.user-result-main em {
+  display: block;
+  color: var(--muted);
+  font-style: normal;
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.self-label {
+  color: var(--muted);
+  font-size: 12px;
+}
+.no-users {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 8px 0 18px;
+}
+@media (max-width: 600px) {
+  .user-results {
+    padding-inline: 18px;
+  }
+  .user-result-main em {
+    display: none;
+  }
+}
+.trends-page {
+  padding: 38px 28px 55px;
+}
+.trends-page > h2 {
+  font-size: 24px;
+  margin: 10px 0;
+}
+.trends-page > p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0 0 28px;
+}
+.trend-ranking {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.trend-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  padding: 18px 17px;
+  text-align: left;
+  border-top: 1px solid var(--line);
+}
+.trend-row:first-child {
+  border-top: 0;
+}
+.trend-row:hover {
+  background: var(--pale);
+}
+.trend-rank {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--blue);
+  font-variant-numeric: tabular-nums;
+}
+.trend-copy {
+  display: block;
+  min-width: 0;
+  flex: 1;
+}
+.trend-copy small,
+.trend-copy em {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  font-style: normal;
+}
+.trend-copy b {
+  display: block;
+  font-size: 15px;
+  margin: 5px 0;
+}
+.trend-arrow {
+  color: var(--muted);
+  font-size: 19px;
+}
+@media (max-width: 600px) {
+  .trends-page {
+    padding: 30px 18px;
+  }
+  .trend-row {
+    padding-inline: 14px;
+  }
+}
+.edit-profile-button {
+  display: block;
+  margin-top: 18px;
+  border: 1px solid var(--blue);
+  color: var(--blue);
+  border-radius: 22px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 17px 0 7px;
+}
+.field-input,
+.handle-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--pale);
+  color: var(--ink);
+  padding: 11px 12px;
+}
+.field-input:focus,
+.handle-input:focus-within {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+.handle-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.handle-input input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+}
+.field-count {
+  display: block;
+  text-align: right;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 4px;
+}
+#profile-bio {
+  min-height: 95px;
+  resize: vertical;
+}
+.form-error {
+  min-height: 20px;
+  color: #d04444 !important;
+  font-size: 12px !important;
+}
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  align-items: center;
+}
+.form-actions > button:first-child {
+  padding: 10px 15px;
+  color: var(--muted);
+}
+html[data-theme="dark"] .field-input,
+html[data-theme="dark"] .handle-input,
+html[data-theme="darkblue"] .field-input,
+html[data-theme="darkblue"] .handle-input {
+  background: #17283d;
+}
+@media (min-width: 601px) {
+  .shell {
+    max-width: 1092px;
+    grid-template-columns: 92px minmax(0, 650px) 350px;
+  }
+  .left {
+    padding: 28px 14px 22px;
+    align-items: center;
+  }
+  .brand {
+    width: 52px;
+    height: 52px;
+    justify-content: center;
+    margin: 0 0 28px;
+    font-size: 0;
+    letter-spacing: 0;
+  }
+  .brand span {
+    font-size: 35px;
+  }
+  nav {
+    width: 100%;
+    gap: 8px;
+  }
+  nav button {
+    width: 52px;
+    height: 52px;
+    justify-content: center;
+    padding: 0;
+    margin: auto;
+    border-radius: 14px;
+  }
+  nav button span,
+  .compose-nav span,
+  .left-bottom .demo-label,
+  .left-bottom > p,
+  .account > span:last-child {
+    display: none;
+  }
+  .compose-nav {
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    margin-top: 22px;
+    border-radius: 50%;
+    font-size: 24px;
+  }
+  .left-bottom {
+    width: 100%;
+    padding: 18px 0 0;
+    display: flex;
+    justify-content: center;
+  }
+  .account {
+    justify-content: center;
+    padding: 0;
+  }
+  .account .avatar {
+    width: 42px;
+    height: 42px;
+  }
+  .right {
+    padding-left: 28px;
+  }
+}
+@media (min-width: 961px) and (max-width: 1150px) {
+  .shell {
+    max-width: none;
+    grid-template-columns: 92px minmax(0, 1fr) 300px;
+  }
+}
+@media (min-width: 601px) and (max-width: 960px) {
+  .shell {
+    max-width: 742px;
+    grid-template-columns: 92px minmax(0, 1fr);
+  }
+}
+.image-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+.image-picker:hover {
+  background: var(--pale);
+}
+.image-picker span:first-child {
+  font-size: 22px;
+  line-height: 1;
+}
+.image-preview {
+  position: relative;
+  margin: 8px 0 14px;
+  width: min(100%, 440px);
+}
+.image-preview img,
+.post-image {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+}
+.image-preview button {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #10233dcc;
+  color: #fff;
+  font-size: 21px;
+  line-height: 1;
+}
+.post-image {
+  margin: 8px 0 18px;
+}
+.quote-image {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: 9px;
+  margin-top: 10px;
+}
+.post-content + .post-image {
+  margin-top: -8px;
+}
+@media (max-width: 600px) {
+  .image-picker span:last-child {
+    display: none;
+  }
+  .compose-footer {
+    flex-wrap: wrap;
+  }
+  .post-image {
+    max-height: 420px;
+  }
+  .left {
+    transition: transform 0.24s ease;
+  }
+  .left.nav-hidden {
+    transform: translateY(calc(100% + 2px));
+    pointer-events: none;
+  }
+  .left:focus-within {
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+}
+@media (max-width: 600px) and (prefers-reduced-motion: reduce) {
+  .left {
+    transition: none;
+  }
+}
+.poll-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 10px;
+  border-radius: 20px;
+}
+.poll-toggle:hover {
+  background: var(--pale);
+}
+.poll-toggle span:first-child {
+  font-size: 20px;
+}
+.poll-builder {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 13px;
+  margin: 8px 0 14px;
+  background: var(--pale);
+}
+.poll-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.poll-head button {
+  font-size: 22px;
+  color: var(--muted);
+}
+.poll-builder > input {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  border-radius: 9px;
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+.poll-results {
+  margin: 8px 0 18px;
+}
+.poll-option {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 11px 12px;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  text-align: left;
+}
+.poll-option:disabled {
+  cursor: default;
+  opacity: 1;
+}
+.poll-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: color-mix(in srgb, var(--blue) 18%, transparent);
+  z-index: 0;
+}
+.poll-option b,
+.poll-option em {
+  position: relative;
+  z-index: 1;
+  font-size: 13px;
+}
+.poll-option em {
+  font-style: normal;
+}
+.poll-option.chosen {
+  border-color: var(--blue);
+}
+.poll-results > small {
+  display: block;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 11px;
+}
+@media (max-width: 600px) {
+  .poll-toggle span:last-child {
+    display: none;
+  }
+}
+.poll-extra-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.poll-extra-row input {
+  display: block;
+  min-width: 0;
+  flex: 1;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  border-radius: 9px;
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+.poll-extra-row button {
+  width: 34px;
+  height: 34px;
+  margin-top: 8px;
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 20px;
+}
+.add-poll-option {
+  display: block;
+  margin-top: 10px;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px;
+}
+.add-poll-option[hidden] {
+  display: none;
+}
+.image-picker > span:last-child,
+.poll-toggle > span:last-child {
+  display: none;
+}
+.image-picker,
+.poll-toggle {
+  width: 40px;
+  height: 40px;
+  justify-content: center;
+  padding: 0;
+}
+.image-picker svg,
+.poll-toggle svg {
+  width: 21px;
+  height: 21px;
+}
+.image-picker span:first-child,
+.poll-toggle span:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.image-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  width: min(100%, 440px);
+}
+.image-preview[hidden] {
+  display: none;
+}
+.image-preview > div {
+  position: relative;
+}
+.image-preview img {
+  height: 160px;
+  object-fit: cover;
+}
+.image-preview > div:only-child {
+  grid-column: 1/-1;
+}
+.image-preview > div:only-child img {
+  height: auto;
+  max-height: 420px;
+}
+
+.audio-preview,
+.post-audio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 18px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--pale);
+}
+.audio-preview[hidden] {
+  display: none;
+}
+.audio-preview audio,
+.post-audio audio {
+  width: min(100%, 360px);
+  height: 34px;
+}
+.audio-preview button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 18px;
+}
+.record-toggle[aria-pressed="true"] {
+  color: #e33a4f;
+  background: #fff0f2;
+  animation: record-pulse 1s ease-in-out infinite;
+}
+@keyframes record-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+.record-dialog form {
+  width: min(88vw, 420px);
+}
+.record-stage {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 24px 10px 28px;
+}
+.record-orb {
+  display: grid;
+  place-items: center;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  color: #d9e2f0;
+  background: var(--pale);
+  font-size: 30px;
+}
+.record-orb.active {
+  color: #e33a4f;
+  background: #fff0f2;
+  animation: record-pulse 1s ease-in-out infinite;
+}
+.record-stage strong {
+  font-size: 16px;
+}
+.record-stage time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.record-stage audio {
+  width: 100%;
+}
+.record-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 9px;
+}
+.record-actions button {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-weight: 700;
+}
+.record-actions button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+.record-start {
+  color: #d92d44;
+}
+#discard-recording {
+  color: var(--muted);
+}
+.quote-picker-list {
+  display: grid;
+  gap: 8px;
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+.quote-source {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  text-align: left;
+  background: var(--surface);
+}
+.quote-source:hover {
+  border-color: var(--blue);
+  background: var(--pale);
+}
+.quote-source b {
+  display: block;
+  margin-bottom: 5px;
+}
+.quote-source p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+.quote-source small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+}
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3px;
+  margin: 8px 0 18px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.media-grid img {
+  display: block;
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+}
+.media-grid.media-count-1 {
+  grid-template-columns: 1fr;
+}
+.media-grid.media-count-1 img {
+  height: auto;
+  max-height: 520px;
+}
+.media-grid.media-count-3 img:first-child {
+  grid-row: span 2;
+  height: 443px;
+}
+.quote-media {
+  margin-bottom: 0;
+  border-radius: 9px;
+}
+.quote-media img {
+  height: 130px;
+}
+.quote-media.media-count-1 img {
+  max-height: 260px;
+}
+@media (max-width: 600px) {
+  .image-preview img {
+    height: 120px;
+  }
+  .media-grid img {
+    height: 170px;
+  }
+  .media-grid.media-count-3 img:first-child {
+    height: 343px;
+  }
+}
+.shared-brand-form { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.shared-brand-form small { grid-column: 1 / -1; }
+.shared-brand-form input { min-width: 0; max-width: 100%; }
+.creator-market .market-card h3 { overflow-wrap: anywhere; margin: 0; }
+.creator-market .split-vote > small { display: block; line-height: 1.6; margin: 8px 0; }
+.creator-market .market-card > small { display: block; line-height: 1.6; }
+.creator-market .market-card button { white-space: normal; }
+.creator-market button.danger { color: #c93636; border-color: color-mix(in srgb, #c93636 45%, var(--line)); }
+.creator-market button.danger:hover { background: color-mix(in srgb, #c93636 8%, transparent); }
+.large-holder-reports { margin: 20px 0; padding: 18px; border: 1px solid var(--line); border-radius: 18px; background: var(--pale); }
+.large-holder-reports h3 { margin: 0 0 4px; }
+.large-holder-reports ol { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 10px; }
+.large-holder-reports li { display: flex; justify-content: space-between; gap: 18px; padding: 12px 0; border-top: 1px solid var(--line); }
+.large-holder-reports li > span:last-child { text-align: right; }
+.large-holder-reports small { display: block; color: var(--muted); line-height: 1.45; }
+.large-holder-reports .empty-report { color: var(--muted); }
+@media (max-width: 560px) { .shared-brand-form { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) { .large-holder-reports li { flex-direction: column; gap: 6px; } .large-holder-reports li > span:last-child { text-align: left; } }
+.question-box { padding: 26px 22px 36px; }
+.question-box > h2 { margin: 6px 0; }
+.question-box > p { color: var(--muted); line-height: 1.6; }
+.question-form, .question-card { border: 1px solid var(--line); border-radius: 18px; background: var(--surface); padding: 18px; }
+.question-form { display: grid; gap: 13px; margin: 20px 0 26px; }
+.question-form label:not(.question-identity) { display: grid; gap: 7px; font-weight: 700; }
+.question-form select, .question-form textarea, .question-card textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--text); padding: 11px 13px; font: inherit; resize: vertical; }
+.question-identity { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.question-form .primary { justify-self: start; }
+
+.relationships-panel { padding: 28px 24px 48px; }
+.relationships-intro h2 { margin: 7px 0 8px; font-size: clamp(1.55rem, 4vw, 2.2rem); }
+.relationships-intro p { margin: 0; color: var(--muted); line-height: 1.7; }
+.relationship-hub { display: flex; align-items: center; gap: 18px; margin: 24px 0; padding: 20px; border: 1px solid var(--line); border-radius: 22px; background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, var(--surface)), var(--surface)); }
+.relationship-hub > div:last-child p { margin: 5px 0 0; color: var(--muted); font-size: .9rem; }
+.relationship-me { width: 92px; min-width: 92px; aspect-ratio: 1; display: grid; place-content: center; text-align: center; border-radius: 50%; color: white; background: var(--accent); box-shadow: 0 10px 28px color-mix(in srgb, var(--accent) 30%, transparent); }
+.relationship-me span, .relationship-me small { font-size: .72rem; }
+.relationship-me b { font-size: 1.5rem; line-height: 1.1; }
+.relationship-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+.relationship-form label { display: grid; gap: 7px; font-weight: 700; font-size: .9rem; }
+.relationship-form input, .relationship-form select, .relationship-form textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--text); padding: 11px 13px; font: inherit; resize: vertical; }
+.relationship-form input:focus, .relationship-form select:focus, .relationship-form textarea:focus { outline: 2px solid color-mix(in srgb, var(--accent) 32%, transparent); border-color: var(--accent); }
+.relationship-note { grid-column: 1 / -1; }
+.relationship-fictional { display: flex !important; grid-auto-flow: column; justify-content: start; align-items: center; font-weight: 600 !important; color: var(--muted); }
+.relationship-fictional input { width: auto; accent-color: var(--accent); }
+.relationship-form .primary { justify-self: end; }
+.relationship-list { margin-top: 28px; }
+.relationship-list-title { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
+.relationship-list-title h3 { margin: 0; }
+.relationship-list-title span { min-width: 24px; padding: 2px 7px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 12%, var(--surface)); color: var(--accent); text-align: center; font-weight: 800; }
+.relationship-card { display: flex; gap: 14px; padding: 16px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: 17px; background: var(--surface); }
+.relationship-avatar { width: 46px; height: 46px; flex: 0 0 46px; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--accent); font-size: 1.1rem; font-weight: 900; }
+.relationship-card-body { min-width: 0; flex: 1; }
+.relationship-card-head { display: flex; justify-content: space-between; gap: 12px; }
+.relationship-card h3 { display: inline; margin: 0 8px 0 0; font-size: 1rem; }
+.relationship-card p { margin: 9px 0 0; color: var(--muted); white-space: pre-wrap; line-height: 1.55; }
+.relationship-kind, .relationship-virtual { display: inline-block; margin: 2px 5px 2px 0; padding: 3px 8px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 12%, var(--surface)); color: var(--accent); font-size: .73rem; font-weight: 800; }
+.relationship-virtual { background: color-mix(in srgb, #8b5cf6 12%, var(--surface)); color: #7c3aed; }
+.relationship-card-head button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 1.25rem; cursor: pointer; }
+.relationship-card-head button:hover { background: color-mix(in srgb, #ef4444 10%, var(--surface)); color: #dc2626; }
+@media (max-width: 620px) { .relationships-panel { padding: 22px 16px 90px; } .relationship-form { grid-template-columns: 1fr; padding: 16px; } .relationship-note { grid-column: auto; } .relationship-form .primary { justify-self: stretch; } .relationship-hub { align-items: flex-start; } }
+
+.pwa-guide { margin-top: 20px; }
+.pwa-guide-head { display: flex; gap: 16px; align-items: flex-start; }
+.pwa-guide-head h2 { margin: 4px 0 7px; }
+.pwa-guide-head p { margin: 0; line-height: 1.65; }
+.pwa-guide-icon { width: 58px; height: 58px; flex: 0 0 58px; display: grid; place-items: center; border-radius: 16px; color: #fff; background: var(--blue); font-size: 1.7rem; box-shadow: 0 10px 24px color-mix(in srgb, var(--blue) 28%, transparent); }
+.pwa-install-button { margin-top: 18px; padding: 11px 20px; }
+.pwa-installed, .pwa-manual { margin-top: 18px; padding: 14px 16px; border-radius: 14px; background: color-mix(in srgb, var(--blue) 9%, var(--surface)); }
+.pwa-installed { display: flex; align-items: center; gap: 10px; color: var(--blue); }
+.pwa-installed span { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: var(--blue); }
+.pwa-manual p { margin: 6px 0 0; color: var(--muted); line-height: 1.65; }
+@media (max-width: 620px) { .pwa-guide-head { gap: 12px; } .pwa-guide-icon { width: 50px; height: 50px; flex-basis: 50px; } .pwa-install-button { width: 100%; } }
+
+.help-center { padding: 28px 24px 50px; }
+.help-hero { padding: 25px; border-radius: 22px; color: #fff; background: linear-gradient(135deg, #1265ed, #5d3bdb); }
+.help-hero h2 { margin: 7px 0 6px; font-size: clamp(1.55rem, 4vw, 2.2rem); }
+.help-hero p { margin: 0; color: rgba(255,255,255,.85); line-height: 1.6; }
+.help-search { display: flex; gap: 9px; margin-top: 18px; }
+.help-search input { min-width: 0; flex: 1; border: 0; border-radius: 12px; padding: 12px 14px; font: inherit; }
+.help-search button { border: 0; border-radius: 12px; padding: 0 16px; color: var(--blue); background: #fff; font-weight: 800; }
+.help-results { margin-top: 25px; }
+.help-result-head { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
+.help-result-head h3 { margin: 0; }
+.help-result-head span { min-width: 25px; padding: 2px 7px; border-radius: 999px; color: var(--blue); background: color-mix(in srgb, var(--blue) 12%, var(--surface)); text-align: center; font-weight: 800; }
+.help-item { margin-bottom: 9px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden; }
+.help-item summary { display: flex; align-items: center; gap: 11px; padding: 16px; cursor: pointer; list-style: none; }
+.help-item summary::-webkit-details-marker { display: none; }
+.help-item summary b { flex: 1; line-height: 1.45; }
+.help-item summary > span:last-child { color: var(--muted); font-size: 1.25rem; transition: transform .2s ease; }
+.help-item[open] summary > span:last-child { transform: rotate(45deg); }
+.help-category { flex: 0 0 auto; padding: 3px 8px; border-radius: 999px; color: var(--blue); background: color-mix(in srgb, var(--blue) 12%, var(--surface)); font-size: .72rem; font-weight: 800; }
+.help-item p { margin: 0; padding: 0 16px 17px; color: var(--muted); line-height: 1.7; }
+@media (max-width: 620px) { .help-center { padding: 22px 16px 90px; } .help-hero { padding: 20px; } .help-search { flex-direction: column; } .help-search button { min-height: 44px; } .help-item summary { align-items: flex-start; } }
+
+.youtube-toggle > span:first-child { color: #ff0033; }
+.youtube-preview { position: relative; margin: 10px 0; }
+.youtube-preview button { position: absolute; z-index: 2; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; color: #fff; background: rgba(0,0,0,.72); }
+.youtube-embed { position: relative; width: 100%; aspect-ratio: 16 / 9; margin: 12px 0; border-radius: 15px; overflow: hidden; background: #000; }
+.youtube-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.youtube-dialog { width: min(480px, calc(100% - 28px)); border: 0; border-radius: 20px; padding: 0; color: var(--text); background: var(--surface); }
+.youtube-dialog form { padding: 21px; }
+.youtube-dialog p { color: var(--muted); line-height: 1.6; }
+.youtube-dialog input { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 12px 13px; color: var(--text); background: var(--bg); font: inherit; }
+.youtube-dialog .primary { width: 100%; margin-top: 10px; }
+.youtube-error { min-height: 1.4em; margin: 7px 0 0 !important; color: #dc2626 !important; font-size: .875rem; }
+.question-columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
+.question-columns section { display: grid; align-content: start; gap: 12px; }
+.question-columns h3 { margin: 0; }
+.question-card small { color: var(--muted); }
+.question-card > p { white-space: pre-wrap; line-height: 1.55; }
+.question-card form { display: grid; gap: 8px; }
+.question-answer { border-top: 1px solid var(--line); padding-top: 10px; }
+.post-question { margin: 10px 0 12px; padding: 14px; border-left: 4px solid var(--blue); border-radius: 4px 14px 14px 4px; background: var(--pale); }
+.post-question small,.post-question span { color: var(--muted); }
+.post-question p { margin: 6px 0; line-height: 1.5; white-space: pre-wrap; }
+@media (max-width: 700px) { .question-columns { grid-template-columns: 1fr; } .question-box { padding: 20px 15px 30px; } }
+.game-room { padding: 26px 22px 38px; }
+.game-room > h2 { margin: 6px 0; }
+.game-room > p { color: var(--muted); line-height: 1.6; }
+.game-cards { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin-top: 24px; }
+.game-cards > article { display: grid; gap: 8px; min-height: 190px; padding: 22px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); color: var(--text); text-align: left; }
+.game-cards > article:hover { border-color: var(--blue); transform: translateY(-2px); }
+.game-cards > article > div { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.game-cards > article > div button:first-child { background: var(--blue); color: white; border-color: var(--blue); }
+.game-cards .difficulty-buttons { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); width: 100%; }
+.game-cards .difficulty-buttons button { padding-inline: 8px; }
+.game-cards b { font-size: 1.25rem; }
+.game-cards small { color: var(--muted); line-height: 1.5; }
+.online-lobby { margin: 22px 0 26px; padding: 18px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+.online-lobby-head,.online-lobby-head > div,.online-status { display: flex; align-items: center; gap: 10px; }
+.online-lobby-head { justify-content: space-between; margin-bottom: 14px; }
+.live-dot { width: 9px; height: 9px; border-radius: 50%; background: #1688f4; box-shadow: 0 0 0 4px color-mix(in srgb,#1688f4 18%,transparent); }
+.online-create,.online-join-code { display: grid; grid-template-columns: 1fr auto 1.3fr auto; gap: 8px; margin-top: 9px; }
+.online-create select,.online-create input,.online-join-code input { min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--text); font: inherit; }
+.online-create label { display: flex; align-items: center; gap: 7px; padding: 0 8px; white-space: nowrap; }
+.online-room-list { display: grid; gap: 7px; margin-top: 14px; }
+.online-room-row { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 11px 13px; text-align: left; }
+.online-room-row span { display: flex; align-items: center; gap: 10px; }.online-room-row small { color: var(--muted); }.online-room-row em { color: var(--blue); font-style: normal; font-size: .88rem; }
+.online-empty { margin: 14px 2px 0; color: var(--muted); }
+.online-status { flex-wrap: wrap; margin: 14px 0; padding: 10px 13px; border: 1px solid color-mix(in srgb,var(--blue) 35%,var(--line)); border-radius: 14px; background: color-mix(in srgb,var(--blue) 7%,var(--surface)); }
+.online-status code { padding: 3px 7px; border-radius: 7px; background: var(--bg); font-weight: 700; letter-spacing: .08em; }
+.tetris-mark { background: #7c3aed; color: #fff; }
+.tetris-wrap { display: flex; justify-content: center; align-items: flex-start; gap: 24px; margin: 22px auto; }
+.tetris-board { display: grid; grid-template-columns: repeat(10, 1fr); width: min(100%, 320px); aspect-ratio: 1/2; padding: 5px; gap: 2px; border: 2px solid var(--line); border-radius: 12px; background: #101624; box-shadow: 0 14px 36px #0003; }
+.t-cell { display: block; border-radius: 3px; background: #1c2638; }
+.t-cell.c1 { background: #22d3ee; }.t-cell.c2 { background: #facc15; }.t-cell.c3 { background: #a78bfa; }.t-cell.c4 { background: #fb923c; }.t-cell.c5 { background: #60a5fa; }.t-cell.c6 { background: #4ade80; }
+.tetris-help { display: grid; gap: 9px; min-width: 150px; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.tetris-help span { color: var(--muted); font-size: .9rem; }
+.tetris-controls { display: grid; grid-template-columns: repeat(5, 52px); justify-content: center; gap: 8px; margin: 14px 0; }
+.tetris-controls button { min-height: 48px; font-size: 1.3rem; }
+.blast-mark { color: #fff; background: linear-gradient(135deg,#0ea5e9,#7c3aed); }
+.blast-board { display: grid; grid-template-columns: repeat(8,1fr); width: min(100%,520px); aspect-ratio: 1; gap: 5px; padding: 9px; border-radius: 18px; background: #151d31; box-shadow: 0 16px 38px #00132b30; }
+.blast-board button { min-width: 0; padding: 0; border: 0; border-radius: 7px; background: #25314c; box-shadow: inset 0 1px 1px #ffffff10; }
+.blast-board button.c1,.blast-piece .c1 { background: #22d3ee; }.blast-board button.c2,.blast-piece .c2 { background: #facc15; }.blast-board button.c3,.blast-piece .c3 { background: #a78bfa; }.blast-board button.c4,.blast-piece .c4 { background: #fb923c; }.blast-board button.c5,.blast-piece .c5 { background: #60a5fa; }.blast-board button.c6,.blast-piece .c6 { background: #4ade80; }
+.blast-tray { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; width: min(100%,520px); margin-top: 16px; }
+.blast-piece { display: grid; place-items: center; min-height: 118px; padding: 12px; border: 2px solid transparent; background: var(--surface); }
+.blast-piece.selected { border-color: var(--blue); background: color-mix(in srgb,var(--blue) 9%,var(--surface)); transform: translateY(-4px); }.blast-piece.used { opacity: .25; }
+.blast-piece > span { display: grid; grid-template-columns: repeat(var(--cols),20px); gap: 3px; }.blast-piece i { display: block; width: 20px; height: 20px; border-radius: 4px; }
+.rps-mark { background: #ff6b35; color: #fff; }
+.rps-arena { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 22px; width: min(100%,580px); margin: 26px 0 18px; padding: 28px; border: 1px solid var(--line); border-radius: 24px; background: var(--surface); }
+.rps-arena > div { display: grid; place-items: center; gap: 8px; }.rps-arena small { color: var(--muted); }.rps-arena strong { font-size: clamp(3.6rem,10vw,6rem); line-height: 1; }.rps-arena > b { color: var(--muted); font-size: 1.25rem; }
+.rps-thinking { animation: rpsShake .22s ease-in-out infinite alternate; }.rps-streak { width: min(100%,580px); color: #ef6c00; font-weight: 800; text-align: center; }
+.rps-buttons { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; width: min(100%,580px); }.rps-buttons button { display: grid; place-items: center; gap: 7px; min-height: 98px; font-weight: 750; }.rps-buttons span { font-size: 2rem; }
+@keyframes rpsShake { from { transform: rotate(-9deg) translateY(-2px); } to { transform: rotate(9deg) translateY(2px); } }
+.go-mark { background: #d9a75b; color: #151515; box-shadow: inset -22px 0 0 #f8f8f8; }
+.go-board { display: grid; grid-template-columns: repeat(9,1fr); width: min(100%,570px); aspect-ratio: 1; padding: 18px; background: #d9a75b; border: 3px solid #83531e; border-radius: 8px; box-shadow: 0 16px 38px #2d190d2b; }
+.go-board button { position: relative; display: grid; place-items: center; min-width: 0; padding: 0; border: 0; border-radius: 0; background: linear-gradient(#80531f,#80531f) center/100% 1px no-repeat,linear-gradient(90deg,#80531f,#80531f) center/1px 100% no-repeat; }
+.go-board button:hover { background-color: #e8bd75; }.go-stone { position: relative; z-index: 1; display: block; width: 82%; aspect-ratio: 1; border-radius: 50%; box-shadow: inset -5px -6px 8px #0005,0 2px 4px #0006; }.go-stone.black { background: #17191d; }.go-stone.white { background: #f5f5f3; box-shadow: inset -4px -5px 7px #aaa8,0 2px 4px #0005; }
+.go-note { width: min(100%,570px); color: var(--muted); font-size: .9rem; line-height: 1.5; }
+.chess-mark { background: linear-gradient(135deg,#313744,#111827); color: #fff; }
+.chess-board { display: grid; grid-template-columns: repeat(8,1fr); width: min(100%,570px); aspect-ratio: 1; border: 4px solid #293241; border-radius: 8px; overflow: hidden; box-shadow: 0 16px 38px #10182730; }
+.chess-board button { display: grid; place-items: center; min-width: 0; padding: 0; border: 0; border-radius: 0; }.chess-board .light-square { background: #e7edf3; }.chess-board .dark-square { background: #718096; }.chess-board button.selected { box-shadow: inset 0 0 0 4px #ffb703; }
+.chess-piece { font-family: Georgia,serif; font-size: clamp(1.7rem,7vw,3.55rem); line-height: 1; }.white-piece { color: #fff; text-shadow: 0 1px 0 #111,1px 0 0 #111,0 -1px 0 #111,-1px 0 0 #111,0 3px 5px #0005; }.black-piece { color: #15181d; text-shadow: 0 2px 2px #fff5; }
+.chess-note { width: min(100%,570px); color: var(--muted); font-size: .9rem; line-height: 1.5; }
+.check-panel { padding: 26px 22px 40px; }.check-panel h2 { margin: 6px 0 16px; }.medical-note { padding: 16px 18px; border: 1px solid #d79b3266; border-radius: 16px; background: #ffb74d16; }.medical-note p,.check-privacy { color: var(--muted); line-height: 1.6; }.medical-note p { margin: 6px 0 0; }
+#adhd-check-form { display: grid; gap: 14px; margin-top: 20px; }#adhd-check-form fieldset { padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }#adhd-check-form legend { display: flex; align-items: center; gap: 9px; padding: 0 5px; font-weight: 700; line-height: 1.5; }#adhd-check-form legend > span { display: grid; place-items: center; flex: 0 0 27px; height: 27px; border-radius: 50%; background: var(--blue); color: #fff; font-size: .8rem; }#adhd-check-form fieldset > div { display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; margin-top: 12px; }#adhd-check-form label { cursor: pointer; }#adhd-check-form label input { position: absolute; opacity: 0; pointer-events: none; }#adhd-check-form label span { display: grid; place-items: center; min-height: 46px; padding: 7px; border: 1px solid var(--line); border-radius: 11px; color: var(--muted); text-align: center; font-size: .86rem; }#adhd-check-form label input:checked + span { border-color: var(--blue); background: color-mix(in srgb,var(--blue) 10%,var(--surface)); color: var(--blue); font-weight: 700; }#adhd-check-form > button { min-height: 48px; }
+.check-result { margin-top: 18px; padding: 18px; border: 1px solid color-mix(in srgb,var(--blue) 40%,var(--line)); border-radius: 16px; background: color-mix(in srgb,var(--blue) 7%,var(--surface)); }.check-result b { font-size: 1.08rem; }.check-result p { margin: 8px 0 0; line-height: 1.55; }.medical-source { display: inline-block; margin-top: 4px; color: var(--blue); font-weight: 700; }
+.search-safety-alert { display: grid; grid-template-columns: auto 1fr; gap: 14px; margin: 18px 0; padding: 18px; border: 1px solid; border-radius: 18px; color: var(--text); }.search-safety-alert > span { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: #fff; font-weight: 900; }.search-safety-alert b { display: block; font-size: 1.03rem; }.search-safety-alert p { margin: 7px 0 10px; line-height: 1.6; }.search-safety-alert a { color: var(--blue); font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }.crime-alert { border-color: #d66a3266; background: #f59e0b16; }.crime-alert > span { background: #d66a32; }.consumer-alert { border-color: #2878c866; background: #3b82f616; }.consumer-alert > span { background: #2878c8; }.crisis-alert { border-color: #cb3d6266; background: #ec489916; }.crisis-alert > span { background: #cb3d62; }
+@media (max-width: 600px) { #adhd-check-form fieldset > div { grid-template-columns: 1fr 1fr; }.check-panel { padding: 20px 12px 32px; } }
+.game-mark { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 20px; font-size: 1.5rem; font-weight: 800; }
+.othello-mark { background: #08764d; color: white; }.shogi-mark { background: #e7b86b; color: #4a2c10; }
+.game-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 20px 0 14px; flex-wrap: wrap; }
+.game-toolbar strong { font-size: 1.05rem; }.game-toolbar span { color: var(--muted); }
+.othello-board { width: min(100%,560px); aspect-ratio: 1; display: grid; grid-template-columns: repeat(8,1fr); padding: 5px; background: #075f3f; border: 3px solid #063d2b; border-radius: 10px; box-shadow: 0 16px 38px #001d1426; }
+.othello-board button { position: relative; display: grid; place-items: center; border: 1px solid #064f35; border-radius: 0; background: #128359; padding: 0; }
+.othello-board button.legal::after { content: ''; width: 14%; aspect-ratio: 1; border-radius: 50%; background: #dff8edaa; }
+.disc { width: 78%; aspect-ratio: 1; border-radius: 50%; box-shadow: inset 0 -4px 8px #0005,0 2px 4px #0005; }.disc.black { background: #151719; }.disc.white { background: #f8fafb; }
+.shogi-board { width: min(100%,570px); aspect-ratio: 1; display: grid; grid-template-columns: repeat(9,1fr); background: #dcae62; border: 3px solid #704716; }
+.shogi-board button { display: grid; place-items: center; min-width: 0; border: 1px solid #8b5d25; border-radius: 0; background: #e8bd77; padding: 0; color: #2c1b0b; font-size: clamp(.72rem,2.6vw,1.25rem); font-weight: 800; }
+.shogi-board button.selected { background: #ffe2a9; box-shadow: inset 0 0 0 3px var(--blue); }.shogi-board .enemy { display: block; transform: rotate(180deg); }
+.shogi-hand { width: min(100%,570px); min-height: 42px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; padding: 8px 0; }.shogi-hand b { margin-right: 7px; }.shogi-hand button.selected { background: var(--blue); color: white; }
+.game-actions { display: flex; gap: 10px; margin-top: 16px; }.game-actions .danger { color: #c93636; border-color: #c9363666; }
+@media (max-width: 600px) { .game-room { padding: 20px 12px 30px; }.game-cards { grid-template-columns: 1fr; }.game-cards > article { min-height: 145px; }.game-toolbar { align-items: flex-start; flex-direction: column; }.online-create,.online-join-code { grid-template-columns: 1fr 1fr; }.online-create input { grid-column: 1/-1; }.tetris-wrap { display: block; }.tetris-board { width: min(78vw,300px); margin: auto; }.tetris-help { display: none; }.tetris-controls { grid-template-columns: repeat(5, minmax(44px,1fr)); }.blast-board { gap: 3px; padding: 6px; }.blast-piece { min-height: 90px; padding: 8px; }.blast-piece > span { grid-template-columns: repeat(var(--cols),15px); }.blast-piece i { width: 15px; height: 15px; } }
+
+.prefecture-guides { padding: 0 24px; }
+.prefecture-guide { margin: 16px 0; padding: 20px; border: 1px solid var(--line); border-left: 4px solid var(--blue); border-radius: 16px; color: var(--ink); }
+.prefecture-guide small { color: var(--blue); font-size: .875rem; font-weight: 700; }
+.prefecture-guide h2 { margin: 8px 0; font-size: 1.5rem; }
+.prefecture-guide p { margin: 8px 0; line-height: 1.7; font-size: 1rem; }
+.prefecture-guide a { display: inline-block; margin-top: 8px; padding: 10px 0; color: var(--blue); font-weight: 700; text-underline-offset: 4px; }
+@media (max-width: 620px) { .prefecture-guides { padding: 0 16px; } }
