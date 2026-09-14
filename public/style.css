@@ -2680,6 +2680,18 @@ html[data-theme="darkblue"] .handle-input {
 .relationship-card-head button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 1.25rem; cursor: pointer; }
 .relationship-card-head button:hover { background: color-mix(in srgb, #ef4444 10%, var(--surface)); color: #dc2626; }
 @media (max-width: 620px) { .relationships-panel { padding: 22px 16px 90px; } .relationship-form { grid-template-columns: 1fr; padding: 16px; } .relationship-note { grid-column: auto; } .relationship-form .primary { justify-self: stretch; } .relationship-hub { align-items: flex-start; } }
+
+.pwa-guide { margin-top: 20px; }
+.pwa-guide-head { display: flex; gap: 16px; align-items: flex-start; }
+.pwa-guide-head h2 { margin: 4px 0 7px; }
+.pwa-guide-head p { margin: 0; line-height: 1.65; }
+.pwa-guide-icon { width: 58px; height: 58px; flex: 0 0 58px; display: grid; place-items: center; border-radius: 16px; color: #fff; background: var(--blue); font-size: 1.7rem; box-shadow: 0 10px 24px color-mix(in srgb, var(--blue) 28%, transparent); }
+.pwa-install-button { margin-top: 18px; padding: 11px 20px; }
+.pwa-installed, .pwa-manual { margin-top: 18px; padding: 14px 16px; border-radius: 14px; background: color-mix(in srgb, var(--blue) 9%, var(--surface)); }
+.pwa-installed { display: flex; align-items: center; gap: 10px; color: var(--blue); }
+.pwa-installed span { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: var(--blue); }
+.pwa-manual p { margin: 6px 0 0; color: var(--muted); line-height: 1.65; }
+@media (max-width: 620px) { .pwa-guide-head { gap: 12px; } .pwa-guide-icon { width: 50px; height: 50px; flex-basis: 50px; } .pwa-install-button { width: 100%; } }
 .question-columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
 .question-columns section { display: grid; align-content: start; gap: 12px; }
 .question-columns h3 { margin: 0; }

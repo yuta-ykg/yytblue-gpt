@@ -261,6 +261,27 @@ function teenSettingsHTML() {
   const features = marketText("センシティブな投稿を非表示・クリエイターシェア市場を停止・危険な検索には相談窓口を表示", "Hide sensitive posts, disable Creator Shares trading, and show support resources for risky searches");
   return `<section class="settings-panel teen-settings"><span class="eyebrow">TEEN SAFETY</span><h2>${marketText("ティーン向け制限", "Teen restrictions")}</h2><p>${features}</p><div class="teen-status ${teenMode ? "on" : ""}"><span aria-hidden="true">${teenMode ? "✓" : "○"}</span><div><b>${teenMode ? marketText("制限中", "Restrictions on") : marketText("制限なし", "Restrictions off")}</b><small>${marketText("この端末に適用されます。ブラウザのデータを消去すると設定も消えます。", "Applies to this device. Clearing browser data also removes this setting.")}</small></div></div><form id="teen-mode-form"><label>${teenMode ? marketText("保護者PINを入力して解除", "Enter guardian PIN to turn off") : marketText("保護者PIN（4桁）", "Guardian PIN (4 digits)")}<input name="pin" type="password" inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4" autocomplete="off" required></label><button class="${teenMode ? "" : "primary"}">${teenMode ? marketText("制限を解除", "Turn off restrictions") : marketText("制限を有効にする", "Turn on restrictions")}</button></form><p class="teen-note">${marketText("この機能は補助的な端末設定です。保護者による見守りやOSのペアレンタルコントロールも併用してください。", "This is a supplemental device setting. Also use guardian supervision and operating-system parental controls.")}</p></section>`;
 }
+let pwaInstallPrompt = null;
+const isPwaInstalled = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+const isIosDevice = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+function pwaGuideHTML() {
+  const installed = isPwaInstalled();
+  const canInstall = Boolean(pwaInstallPrompt) && !installed;
+  const steps = isIosDevice()
+    ? marketText("Safariの共有ボタンを押し、「ホーム画面に追加」を選択してください。", "In Safari, tap Share, then choose Add to Home Screen.")
+    : marketText("ブラウザのメニューから「アプリをインストール」または「ホーム画面に追加」を選択できます。", "Open the browser menu and choose Install app or Add to Home screen.");
+  return `<section class="settings-panel pwa-guide"><span class="eyebrow">INSTALL APP</span><div class="pwa-guide-head"><div class="pwa-guide-icon" aria-hidden="true">✳</div><div><h2>${marketText("yytblueをアプリとして使う", "Use yytblue as an app")}</h2><p>${marketText("ホーム画面からすぐに開けます。基本画面は一度読み込むとオフラインでも表示できます。", "Open yytblue from your home screen. Core screens remain available after they have loaded once.")}</p></div></div>${installed ? `<div class="pwa-installed"><span>✓</span><b>${marketText("この端末にインストール済みです", "Installed on this device")}</b></div>` : canInstall ? `<button type="button" class="primary pwa-install-button" data-install-pwa>${marketText("アプリをインストール", "Install app")}</button>` : `<div class="pwa-manual"><b>${marketText("ホーム画面への追加方法", "How to add to your home screen")}</b><p>${steps}</p></div>`}</section>`;
+}
+window.addEventListener("beforeinstallprompt", event => {
+  event.preventDefault();
+  pwaInstallPrompt = event;
+  if (view === "settings") render();
+});
+window.addEventListener("appinstalled", () => {
+  pwaInstallPrompt = null;
+  if (view === "settings") render();
+  notify(marketText("アプリをインストールしました", "App installed"));
+});
 function teenRestrictedPost(post) {
   if (!teenMode) return false;
   if (post.stock) return true;
@@ -1341,7 +1362,10 @@ function render() {
               "",
             )}</div><p class="language-note">${tr("iconSaved")}</p></section>`
         : "";
-  if (settings) $("#search-area").insertAdjacentHTML("beforeend", teenSettingsHTML());
+  if (settings) {
+    $("#search-area").insertAdjacentHTML("beforeend", pwaGuideHTML());
+    $("#search-area").insertAdjacentHTML("beforeend", teenSettingsHTML());
+  }
   if (view === "market") $("#search-area").innerHTML = marketHTML();
   if (view === "questions") $("#search-area").innerHTML = questionBoxHTML();
   if (view === "games") $("#search-area").innerHTML = gameRoomHTML();
@@ -2014,7 +2038,7 @@ document.addEventListener("submit", (e) => {
     result.hidden=false;result.scrollIntoView({behavior:'smooth',block:'nearest'});
   }
 });
-document.addEventListener("click", (e) => {
+document.addEventListener("click", async (e) => {
   const b = e.target.closest("[data-poll-vote]");
   if (!b) return;
   const p = posts.find((p) => p.id === Number(b.dataset.id));
@@ -2025,7 +2049,7 @@ document.addEventListener("click", (e) => {
   render();
   notify(lang === "ja" ? "投票しました" : "Vote submitted");
 });
-document.addEventListener("click", (e) => {
+document.addEventListener("click", async (e) => {
   const postTarget = e.target.closest("[data-open-post]");
   if (postTarget && !e.target.closest("button, a, input, select, textarea, audio, label")) {
     openPostDetail(postTarget.dataset.openPost);
@@ -2047,6 +2071,14 @@ document.addEventListener("click", (e) => {
     persistState();
     render();
     notify(marketText("交友関係から削除しました", "Relationship deleted"));
+    return;
+  }
+  if (b.hasAttribute("data-install-pwa")) {
+    if (!pwaInstallPrompt) return;
+    await pwaInstallPrompt.prompt();
+    await pwaInstallPrompt.userChoice;
+    pwaInstallPrompt = null;
+    render();
     return;
   }
   if (b.dataset.view) {
