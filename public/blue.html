@@ -137,9 +137,17 @@
                 class="sr"
                 id="post-image"
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm,audio/x-m4a,audio/aac,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.odt"
+                accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm,audio/x-m4a,audio/aac,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.csv,.rtf,.odt"
                 multiple
               /><button
+                type="button"
+                class="poll-toggle document-create-toggle"
+                id="create-document"
+                title="文書を作成"
+                aria-label="文書を作成"
+              >
+                <span aria-hidden="true">▤</span><span id="create-document-label">文書</span></button
+              ><button
                 type="button"
                 class="poll-toggle record-toggle"
                 id="record-audio"
@@ -352,6 +360,16 @@
       <div id="shortcuts-list" class="shortcuts-list"></div>
       <p id="shortcuts-note">文字入力中はショートカットが無効になります。</p>
       <button type="button" id="reset-shortcuts" class="reset-shortcuts">初期設定に戻す</button>
+    </dialog>
+    <dialog id="document-dialog" class="document-dialog">
+      <form id="document-create-form">
+        <div class="dialog-head"><h2 id="document-dialog-title">文書を作成</h2><button type="button" id="close-document-dialog" aria-label="閉じる">×</button></div>
+        <label><span id="document-title-label">タイトル</span><input id="document-title" name="title" maxlength="80" required placeholder="文書のタイトル"></label>
+        <label><span id="document-body-label">本文</span><textarea id="document-body" name="body" maxlength="20000" rows="10" required placeholder="文書の内容を入力"></textarea></label>
+        <label><span id="document-format-label">ファイル形式</span><select id="document-format" name="format"><option value="txt">TXT</option><option value="md">Markdown</option><option value="rtf">RTF（Word対応）</option><option value="csv">CSV</option></select></label>
+        <small id="document-create-help">作成後、投稿への添付ファイルとして追加されます。</small>
+        <button class="primary" id="document-create-button">作成して添付</button>
+      </form>
     </dialog>
     <div id="toast" role="status"></div>
     <script src="creator-market.js"></script>

@@ -16,7 +16,7 @@ const allowedAudio = new Set([
   "audio/aac",
 ]);
 const allowedDocumentExtensions = new Set([
-  "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv", "rtf", "odt",
+  "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "md", "csv", "rtf", "odt",
 ]);
 
 export async function POST(request: Request) {

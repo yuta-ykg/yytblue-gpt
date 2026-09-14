@@ -820,6 +820,18 @@ function applyLanguage() {
   $("#shortcuts-title").textContent = marketText("キーボードショートカット", "Keyboard shortcuts");
   $("#shortcuts-note").textContent = marketText("文字入力中はショートカットが無効になります。", "Shortcuts are disabled while typing.");
   $("#reset-shortcuts").textContent = marketText("初期設定に戻す", "Restore defaults");
+  $("#create-document").title = marketText("文書を作成", "Create document");
+  $("#create-document").setAttribute("aria-label", $("#create-document").title);
+  $("#create-document-label").textContent = marketText("文書", "Document");
+  $("#document-dialog-title").textContent = marketText("文書を作成", "Create document");
+  $("#document-title-label").textContent = marketText("タイトル", "Title");
+  $("#document-title").placeholder = marketText("文書のタイトル", "Document title");
+  $("#document-body-label").textContent = marketText("本文", "Content");
+  $("#document-body").placeholder = marketText("文書の内容を入力", "Write your document");
+  $("#document-format-label").textContent = marketText("ファイル形式", "File format");
+  $("#document-format option[value='rtf']").textContent = marketText("RTF（Word対応）", "RTF (Word compatible)");
+  $("#document-create-help").textContent = marketText("作成後、投稿への添付ファイルとして追加されます。", "The generated file will be attached to your post.");
+  $("#document-create-button").textContent = marketText("作成して添付", "Create and attach");
   $("#close-shortcuts").setAttribute("aria-label", marketText("閉じる", "Close"));
   document.querySelector(".demo-banner").textContent = tr("demo");
   document.querySelector('[data-tab="all"]').textContent = tr("recommended");
@@ -1872,12 +1884,50 @@ $("#cancel-quote").onclick = () => {
   notify(lang === "ja" ? "引用を取り消しました" : "Quote removed");
 };
 $("#post-text").oninput = updatePostButton;
+function rtfDocument(title, body) {
+  const encode = (value) => {
+    let result = "";
+    for (let index = 0; index < value.length; index++) {
+      const code = value.charCodeAt(index);
+      if (value[index] === "\\" || value[index] === "{" || value[index] === "}") result += `\\${value[index]}`;
+      else if (value[index] === "\n") result += "\\par\n";
+      else if (code > 127) result += `\\u${code > 32767 ? code - 65536 : code}?`;
+      else if (value[index] !== "\r") result += value[index];
+    }
+    return result;
+  };
+  return `{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0 Arial;}}\\uc1\\fs32\\b ${encode(title)}\\b0\\fs24\\par\\par ${encode(body)}}`;
+}
+$("#create-document").onclick = () => {
+  if (composingAudio) return notify(marketText("音声と文書は同じ投稿に添付できません", "Audio and documents cannot be attached to the same post"));
+  if (composingDocuments.length >= 4) return notify(tr("documentTooLarge"));
+  $("#document-create-form").reset();
+  $("#document-dialog").showModal();
+  $("#document-title").focus();
+};
+$("#close-document-dialog").onclick = () => $("#document-dialog").close();
+$("#document-create-form").onsubmit = (e) => {
+  e.preventDefault();
+  const title = $("#document-title").value.trim();
+  const body = $("#document-body").value.trim();
+  const format = $("#document-format").value;
+  if (!title || !body) return;
+  const safeName = title.replace(/[\\/:*?"<>|]/g, "_").slice(0, 70) || "document";
+  const csvEscape = (value) => `"${value.replace(/"/g, '""')}"`;
+  const content = format === "rtf" ? rtfDocument(title, body) : format === "csv" ? `${csvEscape(title)}\r\n${body.split(/\r?\n/).map(csvEscape).join("\r\n")}` : format === "md" ? `# ${title}\n\n${body}\n` : `${title}\n\n${body}\n`;
+  const types = { txt: "text/plain", md: "text/markdown", rtf: "application/rtf", csv: "text/csv" };
+  composingDocuments.push(new File([content], `${safeName}.${format}`, { type: types[format] }));
+  renderDocumentPreview();
+  updatePostButton();
+  $("#document-dialog").close();
+  notify(marketText("文書を作成して添付しました", "Document created and attached"));
+};
 $("#post-image").onchange = async (e) => {
   const files = [...(e.target.files || [])];
   if (!files.length) return;
   const imageFiles = files.filter((file) => file.type.startsWith("image/"));
   const audioFiles = files.filter((file) => file.type.startsWith("audio/"));
-  const documentExtensions = new Set(["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv", "rtf", "odt"]);
+  const documentExtensions = new Set(["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "md", "csv", "rtf", "odt"]);
   const documentFiles = files.filter((file) => documentExtensions.has((file.name.split(".").pop() || "").toLowerCase()));
   if (
     imageFiles.length + audioFiles.length + documentFiles.length !== files.length ||
