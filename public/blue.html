@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Blue — ホーム</title>
+    <meta
+      name="description"
+      content="日々の発見や好きなことを、気軽に。日本語のマイクロブログ体験。"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="left">
+        <a class="brand" href="#" aria-label="Blue ホーム" title="Blue"
+          ><span>✳</span></a
+        >
+        <nav id="nav"></nav>
+        <button class="primary compose-nav" id="compose-nav">
+          ＋ <span>ポストする</span>
+        </button>
+        <div class="left-bottom">
+          <div class="demo-label">体験版</div>
+          <p>あなたの「いま」を、ここから。</p>
+          <button class="account" id="account">
+            <span class="avatar me">Y</span
+            ><span><b>あなた</b><small>@you</small></span>
+          </button>
+        </div>
+      </aside>
+      <main>
+        <header>
+          <h1 id="title">ホーム</h1>
+          <span class="header-note">YOUR DAILY CONNECTION</span
+          ><span class="spark">✳</span>
+        </header>
+        <div class="demo-banner">
+          操作を試せるデモです。投稿はこの画面内のみで、再読み込みするとリセットされます。
+        </div>
+        <div id="profile"></div>
+        <div id="search-area"></div>
+        <div class="tabs" id="tabs">
+          <button class="active" data-tab="all">おすすめ</button
+          ><button data-tab="following">フォロー中</button>
+        </div>
+        <section class="composer" id="composer">
+          <span class="avatar me">Y</span>
+          <form id="post-form">
+            <label class="sr" for="post-text">投稿内容</label
+            ><textarea
+              id="post-text"
+              maxlength="200"
+              placeholder="いま、なにしてる？"
+              rows="2"
+            ></textarea>
+            <div id="composer-quote" class="composer-quote" hidden>
+              <div>
+                <small id="composer-quote-author"></small>
+                <p id="composer-quote-text"></p>
+              </div>
+              <button
+                type="button"
+                id="cancel-quote"
+                aria-label="引用を取り消す"
+              >
+                ×
+              </button>
+            </div>
+            <div id="composer-stock" class="composer-stock" hidden>
+              <div id="composer-stock-card"></div>
+              <button type="button" id="cancel-stock" aria-label="シェア情報の添付を取り消す">×</button>
+            </div>
+            <div id="image-preview" class="image-preview" hidden></div>
+            <div id="audio-preview" class="audio-preview" hidden>
+              <audio id="audio-preview-player" controls></audio>
+              <button type="button" id="remove-audio" aria-label="音声を削除">
+                ×
+              </button>
+            </div>
+            <div id="poll-builder" class="poll-builder" hidden>
+              <div class="poll-head">
+                <b id="poll-title">投票</b
+                ><button type="button" id="remove-poll" aria-label="投票を削除">
+                  ×
+                </button>
+              </div>
+              <label class="sr" for="poll-option-1">選択肢1</label
+              ><input
+                id="poll-option-1"
+                data-poll-option
+                maxlength="40"
+                placeholder="選択肢 1"
+              /><label class="sr" for="poll-option-2">選択肢2</label
+              ><input
+                id="poll-option-2"
+                data-poll-option
+                maxlength="40"
+                placeholder="選択肢 2"
+              />
+              <div id="extra-poll-options"></div>
+              <button
+                type="button"
+                id="add-poll-option"
+                class="add-poll-option"
+              >
+                ＋ 選択肢を追加
+              </button>
+            </div>
+            <div class="compose-footer">
+              <label
+                class="image-picker"
+                for="post-image"
+                title="画像・音声を追加"
+                ><span aria-hidden="true">▧</span
+                ><span id="image-picker-label">画像</span></label
+              ><input
+                class="sr"
+                id="post-image"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm,audio/x-m4a,audio/aac"
+                multiple
+              /><button
+                type="button"
+                class="poll-toggle record-toggle"
+                id="record-audio"
+                title="音声を録音"
+                aria-pressed="false"
+              >
+                <span aria-hidden="true">●</span
+                ><span id="record-audio-label">録音</span></button
+              ><button
+                type="button"
+                class="poll-toggle"
+                id="add-poll"
+                title="投票を追加"
+              >
+                <span aria-hidden="true">▤</span
+                ><span id="poll-toggle-label">投票</span></button
+              ><button
+                type="button"
+                class="poll-toggle"
+                id="choose-quote"
+                title="引用リツイート"
+              >
+                <span aria-hidden="true">❝</span><span>引用</span></button
+              ><span id="counter">0 / 200</span
+              ><button class="primary" id="post-button" disabled>
+                ポストする
+              </button>
+            </div>
+          </form>
+        </section>
+        <div class="feed-label">
+          <span id="feed-label">あなたの世界を、少し広く。</span
+          ><span>最新のポスト</span>
+        </div>
+        <section id="feed" aria-live="polite"></section>
+        <footer class="feed-end">
+          ✳
+          <p>ここまでのポストを読みました</p>
+          <small>また、新しいつながりを。</small>
+        </footer>
+      </main>
+      <aside class="right">
+        <form class="search-box" id="right-search">
+          <span id="search-icon"></span
+          ><input name="q" aria-label="Blueを検索" placeholder="Blueを検索" />
+        </form>
+        <section class="welcome">
+          <span class="eyebrow">A LITTLE MORE CONNECTED</span>
+          <h2>好きなことから、<br />つながろう。</h2>
+          <p>何気ないひとことが、<br />新しい出会いのきっかけに。</p>
+          <span class="welcome-mark">✳</span>
+        </section>
+        <section class="side-card">
+          <h2>いま、話題のこと<span>↗</span></h2>
+          <div id="trends"></div>
+        </section>
+        <section class="side-card">
+          <h2>気になる人を見つけよう</h2>
+          <div id="people"></div>
+        </section>
+        <p class="demo-foot">
+          Blue · インタラクティブデモ<br />表示される人物・ポストはサンプルです。
+        </p>
+        <div class="copyright">© 2026 Blue</div>
+      </aside>
+    </div>
+    <dialog id="profile-dialog">
+      <form id="profile-form">
+        <div class="dialog-head">
+          <h2>プロフィールを編集</h2>
+          <button type="button" id="close-profile" aria-label="閉じる">
+            ×
+          </button>
+        </div>
+        <p id="profile-help">表示名、ユーザー名、自己紹介を変更できます。</p>
+        <label class="field-label" for="profile-name">表示名</label
+        ><input
+          class="field-input"
+          id="profile-name"
+          maxlength="10"
+          required
+        /><span class="field-count">10文字以内</span
+        ><label class="field-label" for="profile-handle">ユーザー名</label>
+        <div class="handle-input">
+          <span>@</span
+          ><input
+            id="profile-handle"
+            maxlength="25"
+            pattern="[A-Za-z0-9_]+"
+            required
+          />
+        </div>
+        <span class="field-count">半角英数字と_、25文字以内</span
+        ><label class="field-label" for="profile-bio">自己紹介</label
+        ><textarea
+          class="field-input"
+          id="profile-bio"
+          maxlength="160"
+          rows="4"
+        ></textarea
+        ><span class="field-count">160文字以内</span>
+        <label class="field-label" for="profile-mbti">MBTI</label>
+        <select class="field-input" id="profile-mbti">
+          <option value="">未設定</option>
+          <option>INTJ</option><option>INTP</option><option>ENTJ</option><option>ENTP</option>
+          <option>INFJ</option><option>INFP</option><option>ENFJ</option><option>ENFP</option>
+          <option>ISTJ</option><option>ISFJ</option><option>ESTJ</option><option>ESFJ</option>
+          <option>ISTP</option><option>ISFP</option><option>ESTP</option><option>ESFP</option>
+        </select>
+        <p class="form-error" id="profile-error" role="alert"></p>
+        <div class="form-actions">
+          <button type="button" id="cancel-profile">キャンセル</button
+          ><button class="primary" id="save-profile">保存する</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="repost-dialog">
+      <form id="repost-form">
+        <div class="dialog-head">
+          <h2>リポスト</h2>
+          <button type="button" id="close-repost" aria-label="閉じる">×</button>
+        </div>
+        <p id="repost-context"></p>
+        <div class="repost-options">
+          <button type="button" data-repost-mode="plain" class="repost-choice">
+            ↻ リツイート<br /><small>コメントなしで共有</small></button
+          ><button type="button" data-repost-mode="quote" class="repost-choice">
+            ❝ 引用リツイート<br /><small>コメントを添えて共有</small>
+          </button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="quote-picker-dialog">
+      <form method="dialog">
+        <div class="dialog-head">
+          <h2 id="quote-picker-title">引用する投稿を選択</h2>
+          <button type="button" id="close-quote-picker" aria-label="閉じる">
+            ×
+          </button>
+        </div>
+        <div id="quote-picker-list" class="quote-picker-list"></div>
+      </form>
+    </dialog>
+    <dialog id="reply-dialog">
+      <form id="reply-form">
+        <div class="dialog-head">
+          <h2>返信する</h2>
+          <button type="button" id="close-dialog" aria-label="閉じる">×</button>
+        </div>
+        <p id="reply-context"></p>
+        <textarea
+          id="reply-text"
+          maxlength="200"
+          placeholder="返信を入力"
+          required
+          aria-label="返信内容"
+        ></textarea
+        ><button class="primary">返信する</button>
+      </form>
+    </dialog>
+    <dialog id="record-dialog" class="record-dialog">
+      <form method="dialog">
+        <div class="dialog-head">
+          <h2 id="record-dialog-title">音声を録音</h2>
+          <button type="button" id="close-record-dialog" aria-label="閉じる">
+            ×
+          </button>
+        </div>
+        <div class="record-stage">
+          <div class="record-orb" id="record-orb" aria-hidden="true">●</div>
+          <strong id="record-status">録音の準備ができました</strong>
+          <time id="record-time">00:00</time>
+          <audio id="record-preview" controls hidden></audio>
+        </div>
+        <div class="record-actions">
+          <button type="button" id="start-recording" class="record-start">
+            録音
+          </button>
+          <button type="button" id="stop-recording" disabled>ストップ</button>
+          <button type="button" id="discard-recording" disabled>削除</button>
+          <button type="button" id="finish-recording" class="primary" disabled>
+            完了
+          </button>
+        </div>
+      </form>
+    </dialog>
+    <div id="toast" role="status"></div>
+    <script src="creator-market.js"></script>
+    <script src="shared-market.js"></script>
+    <script src="app.js"></script>
+    <script src="games.js"></script>
+  </body>
+</html>
