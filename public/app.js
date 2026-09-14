@@ -487,6 +487,7 @@ let lists = [];
 let selectedListId = null;
 let githubUser = null;
 let githubDevBypassAvailable = false;
+let chatgptUser = null;
 let helpQuery = "";
 let view = "home",
   tab = "all",
@@ -632,8 +633,16 @@ async function loadGitHubSession() {
   } catch { githubUser = null; }
 }
 loadGitHubSession();
+async function loadChatGPTSession() {
+  try {
+    const response = await fetch("/api/auth/chatgpt/session", { cache: "no-store" });
+    chatgptUser = response.ok ? (await response.json()).user : null;
+    render();
+  } catch { chatgptUser = null; }
+}
+loadChatGPTSession();
 function githubAccountHTML() {
-  return `<section class="settings-panel github-account"><span class="eyebrow">SIGN IN</span><h2>${marketText("ログインとログアウト", "Sign in and sign out")}</h2>${githubUser ? `<div class="github-user">${githubUser.avatarUrl ? `<img src="${escape(githubUser.avatarUrl)}" alt="">` : `<span>GH</span>`}<div><b>${escape(githubUser.name)}</b><small>@${escape(githubUser.login)}</small></div><button type="button" data-github-logout>${marketText("GitHubからログアウト", "Sign out of GitHub")}</button></div><p>${marketText("GitHubアカウントでログインしています。", "You are signed in with GitHub.")}</p>` : `<p>${marketText("GitHubアカウントを使ってログインできます。認証後もGitHubのパスワードはyytblueに共有されません。", "Sign in with your GitHub account. Your GitHub password is never shared with yytblue.")}</p><a class="github-login" href="/api/auth/github/start"><span aria-hidden="true">●</span>${marketText("GitHubでログイン", "Continue with GitHub")}</a>${githubDevBypassAvailable ? `<button type="button" class="dev-login-skip" data-github-dev-login>${marketText("開発用ログインをスキップ", "Skip sign-in for development")}</button><small class="dev-only-note">${marketText("localhostでのみ利用できます。本番環境では無効です。", "Available only on localhost and disabled in production.")}</small>` : ""}`}</section><section class="settings-panel signout-panel"><h2>${marketText("サイトからログアウト", "Sign out of the site")}</h2><p>${marketText("この端末のサイトセッションを終了します。", "End the site session on this device.")}</p><a href="/signout-with-chatgpt?return_to=/" target="_top">${marketText("ログアウト", "Sign out")}</a></section>`;
+  return `<section class="settings-panel github-account"><span class="eyebrow">SIGN IN</span><h2>${marketText("ログイン方法", "Sign-in methods")}</h2><div class="auth-provider"><div class="auth-provider-head"><span class="chatgpt-mark">✳</span><div><b>ChatGPT</b><small>${chatgptUser ? escape(chatgptUser.name) : marketText("未ログイン", "Not signed in")}</small></div></div>${chatgptUser ? `<a class="provider-signout" href="/signout-with-chatgpt?return_to=/" target="_top">${marketText("ログアウト", "Sign out")}</a>` : `<a class="chatgpt-login" href="/signin-with-chatgpt?return_to=/" target="_top">${marketText("ChatGPTでログイン", "Continue with ChatGPT")}</a>`}</div><div class="auth-provider"><div class="auth-provider-head"><span class="github-mark">GH</span><div><b>GitHub</b><small>${githubUser ? `@${escape(githubUser.login)}` : marketText("未ログイン", "Not signed in")}</small></div></div>${githubUser ? `<button type="button" class="provider-signout" data-github-logout>${marketText("ログアウト", "Sign out")}</button>` : `<a class="github-login" href="/api/auth/github/start">${marketText("GitHubでログイン", "Continue with GitHub")}</a>`}</div>${githubDevBypassAvailable && !githubUser ? `<button type="button" class="dev-login-skip" data-github-dev-login>${marketText("開発用ログインをスキップ", "Skip sign-in for development")}</button><small class="dev-only-note">${marketText("localhostでのみ利用できます。本番環境では無効です。", "Available only on localhost and disabled in production.")}</small>` : ""}</section>`;
 }
 function navigate(v, u = "you") {
   view = v;
