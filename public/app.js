@@ -838,6 +838,11 @@ function applyLanguage() {
   $("#image-editor-title").textContent = marketText("画像を編集", "Edit image");
   $("#brightness-label").textContent = marketText("明るさ", "Brightness");
   $("#contrast-label").textContent = marketText("コントラスト", "Contrast");
+  $("#crop-ratio-label").textContent = marketText("比率", "Crop ratio");
+  $("#zoom-label").textContent = marketText("ズーム", "Zoom");
+  $("#saturation-label").textContent = marketText("彩度", "Saturation");
+  $("#blur-label").textContent = marketText("ぼかし", "Blur");
+  $("#grayscale-label").textContent = marketText("グレー", "Grayscale");
   $("#reset-image-editor").textContent = marketText("元に戻す", "Reset");
   $("#save-image-editor").textContent = marketText("編集を適用", "Apply edits");
   $("#close-shortcuts").setAttribute("aria-label", marketText("閉じる", "Close"));
@@ -1734,9 +1739,14 @@ function drawImageEditor() {
   const canvas = $("#image-editor-canvas");
   const source = imageEditorSource;
   const state = imageEditorTransform;
-  const squareSize = Math.min(source.naturalWidth, source.naturalHeight);
-  const cropWidth = state.square ? squareSize : source.naturalWidth;
-  const cropHeight = state.square ? squareSize : source.naturalHeight;
+  let cropWidth = source.naturalWidth, cropHeight = source.naturalHeight;
+  if (state.cropRatio !== "original") {
+    const ratio = Number(state.cropRatio);
+    if (cropWidth / cropHeight > ratio) cropWidth = cropHeight * ratio;
+    else cropHeight = cropWidth / ratio;
+  }
+  cropWidth /= state.zoom / 100;
+  cropHeight /= state.zoom / 100;
   const rotated = Math.abs(state.rotation % 180) === 90;
   const maximum = 1800;
   const scale = Math.min(1, maximum / Math.max(cropWidth, cropHeight));
@@ -1749,19 +1759,30 @@ function drawImageEditor() {
   context.translate(canvas.width / 2, canvas.height / 2);
   context.rotate((state.rotation * Math.PI) / 180);
   context.scale(state.flip ? -1 : 1, 1);
-  context.filter = `brightness(${state.brightness}%) contrast(${state.contrast}%)`;
+  context.filter = `brightness(${state.brightness}%) contrast(${state.contrast}%) saturate(${state.saturation}%) grayscale(${state.grayscale}%) sepia(${state.sepia}%) hue-rotate(${state.hue}deg) blur(${state.blur}px)`;
   const sourceX = (source.naturalWidth - cropWidth) / 2;
   const sourceY = (source.naturalHeight - cropHeight) / 2;
   context.drawImage(source, sourceX, sourceY, cropWidth, cropHeight, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
   context.restore();
   $("#brightness-output").textContent = `${state.brightness}%`;
   $("#contrast-output").textContent = `${state.contrast}%`;
+  $("#saturation-output").textContent = `${state.saturation}%`;
+  $("#blur-output").textContent = `${state.blur}px`;
+  $("#grayscale-output").textContent = `${state.grayscale}%`;
+  $("#zoom-output").textContent = `${state.zoom}%`;
+  $("#crop-output").textContent = state.cropRatio === "original" ? "Original" : ({ "1": "1:1", "1.333333": "4:3", "1.777778": "16:9" }[state.cropRatio] || "Custom");
 }
 function resetImageEditor() {
-  imageEditorTransform = { rotation: 0, flip: false, square: false, brightness: 100, contrast: 100 };
+  imageEditorTransform = { rotation: 0, flip: false, cropRatio: "original", zoom: 100, brightness: 100, contrast: 100, saturation: 100, blur: 0, grayscale: 0, sepia: 0, hue: 0 };
   $("#image-brightness").value = "100";
   $("#image-contrast").value = "100";
+  $("#image-saturation").value = "100";
+  $("#image-blur").value = "0";
+  $("#image-grayscale").value = "0";
+  $("#image-zoom").value = "100";
+  $("#image-crop-ratio").value = "original";
   document.querySelectorAll(".image-editor-tools .active").forEach((button) => button.classList.remove("active"));
+  document.querySelectorAll(".image-presets .active").forEach((button) => button.classList.remove("active"));
   drawImageEditor();
 }
 function openImageEditor(index) {
@@ -2079,12 +2100,35 @@ document.querySelector(".image-editor-tools").onclick = (e) => {
   if (button.dataset.imageEdit === "rotate-left") imageEditorTransform.rotation -= 90;
   if (button.dataset.imageEdit === "rotate-right") imageEditorTransform.rotation += 90;
   if (button.dataset.imageEdit === "flip") imageEditorTransform.flip = !imageEditorTransform.flip;
-  if (button.dataset.imageEdit === "square") imageEditorTransform.square = !imageEditorTransform.square;
-  button.classList.toggle("active", button.dataset.imageEdit === "square" && imageEditorTransform.square);
+  if (button.dataset.imageEdit === "crop") {
+    const ratios = ["original", "1", "1.333333", "1.777778"];
+    imageEditorTransform.cropRatio = ratios[(ratios.indexOf(imageEditorTransform.cropRatio) + 1) % ratios.length];
+    $("#image-crop-ratio").value = imageEditorTransform.cropRatio;
+  }
   drawImageEditor();
 };
 $("#image-brightness").oninput = (e) => { imageEditorTransform.brightness = Number(e.target.value); drawImageEditor(); };
 $("#image-contrast").oninput = (e) => { imageEditorTransform.contrast = Number(e.target.value); drawImageEditor(); };
+$("#image-saturation").oninput = (e) => { imageEditorTransform.saturation = Number(e.target.value); drawImageEditor(); };
+$("#image-blur").oninput = (e) => { imageEditorTransform.blur = Number(e.target.value); drawImageEditor(); };
+$("#image-grayscale").oninput = (e) => { imageEditorTransform.grayscale = Number(e.target.value); drawImageEditor(); };
+$("#image-zoom").oninput = (e) => { imageEditorTransform.zoom = Number(e.target.value); drawImageEditor(); };
+$("#image-crop-ratio").onchange = (e) => { imageEditorTransform.cropRatio = e.target.value; drawImageEditor(); };
+document.querySelector(".image-presets").onclick = (e) => {
+  const button = e.target.closest("[data-image-preset]");
+  if (!button || !imageEditorTransform) return;
+  Object.assign(imageEditorTransform, { brightness: 100, contrast: 100, saturation: 100, grayscale: 0, sepia: 0, hue: 0, blur: 0 });
+  if (button.dataset.imagePreset === "vivid") Object.assign(imageEditorTransform, { contrast: 112, saturation: 145 });
+  if (button.dataset.imagePreset === "warm") Object.assign(imageEditorTransform, { brightness: 104, saturation: 112, sepia: 22, hue: -8 });
+  if (button.dataset.imagePreset === "mono") Object.assign(imageEditorTransform, { contrast: 112, grayscale: 100 });
+  $("#image-brightness").value = String(imageEditorTransform.brightness);
+  $("#image-contrast").value = String(imageEditorTransform.contrast);
+  $("#image-saturation").value = String(imageEditorTransform.saturation);
+  $("#image-blur").value = String(imageEditorTransform.blur);
+  $("#image-grayscale").value = String(imageEditorTransform.grayscale);
+  document.querySelectorAll(".image-presets button").forEach((item) => item.classList.toggle("active", item === button));
+  drawImageEditor();
+};
 $("#save-image-editor").onclick = () => {
   if (editingImageIndex < 0) return;
   composingImages[editingImageIndex] = $("#image-editor-canvas").toDataURL("image/jpeg", 0.9);

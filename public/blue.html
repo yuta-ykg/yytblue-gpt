@@ -375,10 +375,16 @@
       <div class="dialog-head"><h2 id="image-editor-title">画像を編集</h2><button type="button" id="close-image-editor" aria-label="閉じる">×</button></div>
       <div class="image-editor-stage"><canvas id="image-editor-canvas"></canvas></div>
       <div class="image-editor-tools">
-        <button type="button" data-image-edit="rotate-left" title="左に回転">↶</button><button type="button" data-image-edit="rotate-right" title="右に回転">↷</button><button type="button" data-image-edit="flip" title="左右反転">↔</button><button type="button" data-image-edit="square" title="正方形にトリミング">□</button>
+        <button type="button" data-image-edit="rotate-left" title="左に回転">↶</button><button type="button" data-image-edit="rotate-right" title="右に回転">↷</button><button type="button" data-image-edit="flip" title="左右反転">↔</button><button type="button" data-image-edit="crop" title="トリミング比率">▣</button>
       </div>
+      <div class="image-presets"><button type="button" data-image-preset="natural">Natural</button><button type="button" data-image-preset="vivid">Vivid</button><button type="button" data-image-preset="warm">Warm</button><button type="button" data-image-preset="mono">Mono</button></div>
+      <label class="image-slider"><span id="crop-ratio-label">比率</span><select id="image-crop-ratio"><option value="original">Original</option><option value="1">1:1</option><option value="1.333333">4:3</option><option value="1.777778">16:9</option></select><output id="crop-output">Original</output></label>
+      <label class="image-slider"><span id="zoom-label">ズーム</span><input id="image-zoom" type="range" min="100" max="200" value="100"><output id="zoom-output">100%</output></label>
       <label class="image-slider"><span id="brightness-label">明るさ</span><input id="image-brightness" type="range" min="50" max="150" value="100"><output id="brightness-output">100%</output></label>
       <label class="image-slider"><span id="contrast-label">コントラスト</span><input id="image-contrast" type="range" min="50" max="150" value="100"><output id="contrast-output">100%</output></label>
+      <label class="image-slider"><span id="saturation-label">彩度</span><input id="image-saturation" type="range" min="0" max="200" value="100"><output id="saturation-output">100%</output></label>
+      <label class="image-slider"><span id="blur-label">ぼかし</span><input id="image-blur" type="range" min="0" max="10" value="0"><output id="blur-output">0px</output></label>
+      <label class="image-slider"><span id="grayscale-label">グレー</span><input id="image-grayscale" type="range" min="0" max="100" value="0"><output id="grayscale-output">0%</output></label>
       <div class="image-editor-actions"><button type="button" id="reset-image-editor">元に戻す</button><button type="button" class="primary" id="save-image-editor">編集を適用</button></div>
     </dialog>
     <div id="toast" role="status"></div>
