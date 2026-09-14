@@ -2692,6 +2692,27 @@ html[data-theme="darkblue"] .handle-input {
 .pwa-installed span { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: var(--blue); }
 .pwa-manual p { margin: 6px 0 0; color: var(--muted); line-height: 1.65; }
 @media (max-width: 620px) { .pwa-guide-head { gap: 12px; } .pwa-guide-icon { width: 50px; height: 50px; flex-basis: 50px; } .pwa-install-button { width: 100%; } }
+
+.help-center { padding: 28px 24px 50px; }
+.help-hero { padding: 25px; border-radius: 22px; color: #fff; background: linear-gradient(135deg, #1265ed, #5d3bdb); }
+.help-hero h2 { margin: 7px 0 6px; font-size: clamp(1.55rem, 4vw, 2.2rem); }
+.help-hero p { margin: 0; color: rgba(255,255,255,.85); line-height: 1.6; }
+.help-search { display: flex; gap: 9px; margin-top: 18px; }
+.help-search input { min-width: 0; flex: 1; border: 0; border-radius: 12px; padding: 12px 14px; font: inherit; }
+.help-search button { border: 0; border-radius: 12px; padding: 0 16px; color: var(--blue); background: #fff; font-weight: 800; }
+.help-results { margin-top: 25px; }
+.help-result-head { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
+.help-result-head h3 { margin: 0; }
+.help-result-head span { min-width: 25px; padding: 2px 7px; border-radius: 999px; color: var(--blue); background: color-mix(in srgb, var(--blue) 12%, var(--surface)); text-align: center; font-weight: 800; }
+.help-item { margin-bottom: 9px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden; }
+.help-item summary { display: flex; align-items: center; gap: 11px; padding: 16px; cursor: pointer; list-style: none; }
+.help-item summary::-webkit-details-marker { display: none; }
+.help-item summary b { flex: 1; line-height: 1.45; }
+.help-item summary > span:last-child { color: var(--muted); font-size: 1.25rem; transition: transform .2s ease; }
+.help-item[open] summary > span:last-child { transform: rotate(45deg); }
+.help-category { flex: 0 0 auto; padding: 3px 8px; border-radius: 999px; color: var(--blue); background: color-mix(in srgb, var(--blue) 12%, var(--surface)); font-size: .72rem; font-weight: 800; }
+.help-item p { margin: 0; padding: 0 16px 17px; color: var(--muted); line-height: 1.7; }
+@media (max-width: 620px) { .help-center { padding: 22px 16px 90px; } .help-hero { padding: 20px; } .help-search { flex-direction: column; } .help-search button { min-height: 44px; } .help-item summary { align-items: flex-start; } }
 .question-columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
 .question-columns section { display: grid; align-content: start; gap: 12px; }
 .question-columns h3 { margin: 0; }

@@ -25,6 +25,7 @@ paths.audio = "M9 18V6l10-3v18L9 18Zm-4-5h4v4H5Z";
 paths.market = "M4 20V10h4v10m4 0V4h4v16m4 0V8M2 20h20";
 paths.diagnosis = "M12 3v18M3 12h18M7 7h10v10H7Z";
 paths.relationships = "M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6m8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6M2 21v-2a6 6 0 0 1 12 0v2m0-7a6 6 0 0 1 8 5.7V21";
+paths.help = "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20m-3.2-12.5a3.2 3.2 0 1 1 5.3 2.4c-1.3 1-2.1 1.6-2.1 3.6m.01 3.1h.01";
 const copy = {
   ja: {
     home: "ホーム",
@@ -34,6 +35,7 @@ const copy = {
     games: "ゲームルーム",
     diagnosis: "セルフチェック",
     relationships: "交友関係",
+    help: "ヘルプ",
     user: "プロフィール",
     settings: "設定",
     trendsNav: "トレンド",
@@ -125,6 +127,7 @@ const copy = {
     games: "Game rooms",
     diagnosis: "Self-check",
     relationships: "Relationships",
+    help: "Help",
     user: "Profile",
     settings: "Settings",
     trendsNav: "Trending",
@@ -471,6 +474,7 @@ let questions = [
   { id: 1, to: "you", from: "nagi", anonymous: true, text: "最近いちばん楽しかったことは何ですか？", time: "サンプル", answer: null },
 ];
 let relationships = [];
+let helpQuery = "";
 let view = "home",
   tab = "all",
   query = "",
@@ -629,6 +633,36 @@ function relationshipsHTML() {
   }).join("");
   const options = relationshipTypes.map(([id, ja, en]) => `<option value="${id}">${lang === "ja" ? ja : en}</option>`).join("");
   return `<section class="relationships-panel"><div class="relationships-intro"><span class="eyebrow">MY CIRCLE</span><h2>${marketText("自分の交友関係", "My relationships")}</h2><p>${marketText("現実の知り合いだけでなく、創作した人物やオンライン上の関係も自由に登録できます。", "Add people you know in real life, fictional characters, or online relationships.")}</p></div><div class="relationship-hub"><div class="relationship-me"><span>${marketText("あなた", "You")}</span><b>${relationships.length}</b><small>${marketText("人とつながり", "connections")}</small></div><div><b>${marketText("関係を自分でつくる", "Build your own circle")}</b><p>${marketText("同じ相手でも、異なる関係なら複数登録できます。", "The same person can have more than one relationship type.")}</p></div></div><form id="relationship-form" class="relationship-form"><label>${marketText("名前", "Name")}<input name="person" maxlength="40" required placeholder="${marketText("人物の名前", "Person's name")}"></label><label>${marketText("関係", "Relationship")}<select name="type">${options}</select></label><label>${marketText("その他の関係名", "Custom relationship")}<input name="custom" maxlength="30" placeholder="${marketText("師匠、相棒など", "Mentor, teammate, etc.")}"></label><label class="relationship-note">${marketText("メモ（任意）", "Note (optional)")}<textarea name="note" maxlength="160" rows="2" placeholder="${marketText("この人との関係や思い出", "A note about this relationship")}"></textarea></label><label class="relationship-fictional"><input name="fictional" type="checkbox"> ${marketText("創作・オンライン上の関係", "Fictional or online relationship")}</label><button class="primary">${marketText("関係を追加", "Add relationship")}</button></form><div class="relationship-list"><div class="relationship-list-title"><h3>${marketText("つながり", "Connections")}</h3><span>${relationships.length}</span></div>${cards || `<div class="empty">${marketText("まだ関係がありません。最初のひとりを追加してみましょう。", "No relationships yet. Add the first person to your circle.")}</div>`}</div></section>`;
+}
+function helpCenterHTML() {
+  const items = lang === "ja" ? [
+    ["はじめに", "yytblueはどのようなサービスですか？", "投稿、画像・音声の共有、質問箱、ゲーム、交友関係などを楽しめるマイクロブログです。設定から言語や表示テーマも選べます。"],
+    ["投稿", "ポスト、返信、リポスト、引用リポストの違いは？", "ポストは通常の投稿、返信は投稿への返答です。リポストは投稿を共有し、引用リポストでは自分のコメントを添えて共有できます。"],
+    ["画像・音声", "画像や音声を投稿できますか？", "画像は最大4枚、音声は録音または音声ファイルから1件追加できます。画像と音声は同じ投稿に同時には追加できません。"],
+    ["PWA", "アプリとしてホーム画面に追加するには？", "設定の「yytblueをアプリとして使う」から案内を確認できます。対応ブラウザではインストールボタンを使えます。iPhoneではSafariの共有メニューから「ホーム画面に追加」を選択してください。"],
+    ["アカウント", "プロフィールと公開範囲を変更するには？", "プロフィール画面で表示名、ユーザー名、自己紹介、MBTIを編集できます。設定ではアカウントを非公開に切り替えられます。ユーザー名は重複できません。"],
+    ["検索", "都道府県や政令指定都市を検索できますか？", "できます。都道府県名や政令指定都市名を検索すると、地域案内と公式サイトへのリンクが表示されます。"],
+    ["安全", "危険な検索語を入力した場合は？", "闇バイト、自傷、オンラインカジノ、消費者トラブルなどに関する検索では、相談先や注意情報を表示します。緊急時は地域の緊急窓口へ連絡してください。"],
+    ["質問箱", "質問箱はどのように使いますか？", "送信先を選び、匿名または名前付きで質問を送れます。受け取った人は回答を投稿として公開できます。"],
+    ["ゲーム", "ゲームルームでできることは？", "オセロ、将棋、囲碁、チェス、テトリス、ブロックブラスト風ゲーム、じゃんけんを遊べます。CPU対戦、オンライン対戦、プライベートルームにも対応しています。"],
+    ["シェア市場", "クリエイターシェアとは何ですか？", "クリエイターの活動を応援するための、ポイントを使ったデモ用のシェア市場です。実際の株式や金融商品ではありません。"],
+    ["ティーン向け制限", "ティーン向け制限とは何ですか？", "この端末でセンシティブな投稿とシェア市場を非表示にし、危険な検索の案内を強化します。設定には4桁の保護者PINを使用します。"],
+  ] : [
+    ["Getting started", "What is yytblue?", "yytblue is a microblog for posts, image and audio sharing, questions, games, and personal relationships. You can also choose a language and theme in Settings."],
+    ["Posting", "How do posts, replies, reposts, and quote reposts differ?", "A post is a regular update. A reply responds to a post. A repost shares it, while a quote repost shares it with your own comment."],
+    ["Media", "Can I post images or audio?", "You can add up to four images, or one audio recording or audio file. Images and audio cannot be added to the same post."],
+    ["PWA", "How do I add yytblue to my home screen?", "See the guide under Use yytblue as an app in Settings. On supported browsers, use Install app. On iPhone, use Safari Share, then Add to Home Screen."],
+    ["Account", "How do I change my profile or privacy?", "Edit your name, username, bio, and MBTI from Profile. Set your account to private in Settings. Usernames must be unique."],
+    ["Search", "Can I search prefectures and designated cities?", "Yes. Searching a prefecture or designated city shows a regional guide and a link to its official website."],
+    ["Safety", "What happens when I search risky terms?", "Searches related to illegal jobs, self-harm, online casinos, or consumer issues show safety information and relevant support resources. Contact local emergency services in an emergency."],
+    ["Questions", "How does the question box work?", "Choose a recipient and send a question anonymously or with your name. Recipients can publish an answer as a post."],
+    ["Games", "What is available in Game rooms?", "Play Othello, Shogi, Go, Chess, Tetris, Block Blast-style puzzles, and Rock Paper Scissors. CPU games, online games, and private rooms are available."],
+    ["Creator Shares", "What are Creator Shares?", "Creator Shares are a points-based demo market for supporting creators. They are not real shares or financial products."],
+    ["Teen restrictions", "What are Teen restrictions?", "They hide sensitive posts and Creator Shares on this device and strengthen risky-search guidance. Settings use a four-digit guardian PIN."],
+  ];
+  const q = helpQuery.trim().toLowerCase();
+  const matches = q ? items.filter(item => item.join(" ").toLowerCase().includes(q)) : items;
+  return `<section class="help-center"><div class="help-hero"><span class="eyebrow">HELP CENTER</span><h2>${marketText("yytblue ヘルプセンター", "yytblue Help Center")}</h2><p>${marketText("使い方やよくある質問を検索できます。", "Search guides and frequently asked questions.")}</p><form id="help-search" class="help-search"><input name="q" value="${escape(helpQuery)}" placeholder="${marketText("例：投稿、PWA、ゲーム、検索", "Try posting, PWA, games, search")}" aria-label="${marketText("ヘルプを検索", "Search help")}"><button>${marketText("検索", "Search")}</button></form></div><div class="help-results"><div class="help-result-head"><h3>${q ? marketText("検索結果", "Search results") : marketText("よくある質問", "Frequently asked questions")}</h3><span>${matches.length}</span></div>${matches.map(([category, title, answer]) => `<details class="help-item" ${q ? "open" : ""}><summary><span class="help-category">${escape(category)}</span><b>${escape(title)}</b><span aria-hidden="true">＋</span></summary><p>${escape(answer)}</p></details>`).join("") || `<div class="empty">${marketText("一致するヘルプがありません。別の言葉で検索してください。", "No help articles matched. Try another search.")}</div>`}</div></section>`;
 }
 function adhdCheckHTML() {
   const qs = lang === "ja"
@@ -1317,6 +1351,7 @@ function render() {
     games: tr("games"),
     diagnosis: tr("diagnosis"),
     relationships: tr("relationships"),
+    help: tr("help"),
     user: tr("user"),
     settings: tr("settings"),
   };
@@ -1333,7 +1368,7 @@ function render() {
   $("#tabs").hidden = view !== "home";
   $("#composer").style.display = view === "home" ? "flex" : "none";
   const settings = view === "settings",
-    standalone = settings || view === "market" || view === "questions" || view === "games" || view === "diagnosis" || view === "relationships" || (view === "search" && !query);
+    standalone = settings || view === "market" || view === "questions" || view === "games" || view === "diagnosis" || view === "relationships" || view === "help" || (view === "search" && !query);
   document.querySelector(".feed-label").hidden = standalone || view === "post";
   $("#feed").hidden = standalone;
   document.querySelector(".feed-end").hidden = standalone || view === "post";
@@ -1371,6 +1406,7 @@ function render() {
   if (view === "games") $("#search-area").innerHTML = gameRoomHTML();
   if (view === "diagnosis") $("#search-area").innerHTML = adhdCheckHTML();
   if (view === "relationships") $("#search-area").innerHTML = relationshipsHTML();
+  if (view === "help") $("#search-area").innerHTML = helpCenterHTML();
   $("#feed-label").textContent =
     view === "search"
       ? query
@@ -2000,6 +2036,12 @@ $("#right-search").onsubmit = (e) => {
   navigate("search");
 };
 document.addEventListener("submit", (e) => {
+  if (e.target.id === "help-search") {
+    e.preventDefault();
+    helpQuery = String(new FormData(e.target).get("q") || "").trim();
+    render();
+    return;
+  }
   if (e.target.id === "relationship-form") {
     e.preventDefault();
     const data = new FormData(e.target);
