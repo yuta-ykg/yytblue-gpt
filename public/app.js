@@ -819,6 +819,7 @@ function applyLanguage() {
   $("#open-shortcuts").querySelector("span:last-child").textContent = marketText("ショートカット", "Shortcuts");
   $("#shortcuts-title").textContent = marketText("キーボードショートカット", "Keyboard shortcuts");
   $("#shortcuts-note").textContent = marketText("文字入力中はショートカットが無効になります。", "Shortcuts are disabled while typing.");
+  $("#reset-shortcuts").textContent = marketText("初期設定に戻す", "Restore defaults");
   $("#close-shortcuts").setAttribute("aria-label", marketText("閉じる", "Close"));
   document.querySelector(".demo-banner").textContent = tr("demo");
   document.querySelector('[data-tab="all"]').textContent = tr("recommended");
@@ -2229,38 +2230,86 @@ $("#drawer-compose").onclick = () => {
   navigate("home");
   $("#post-text").focus();
 };
-const keyboardShortcuts = [
-  ["H", "home", "ホーム", "Home"],
-  ["/", "search", "検索", "Search"],
-  ["N", "compose", "新しいポスト", "New post"],
-  ["B", "bookmark", "ブックマーク", "Bookmarks"],
-  ["L", "lists", "リスト", "Lists"],
-  ["S", "settings", "設定", "Settings"],
-  ["?", "help-dialog", "ショートカット一覧", "Shortcut help"],
-  ["Esc", "close", "画面を閉じる", "Close overlay"],
+const shortcutDefinitions = [
+  ["home", "ホーム", "Home"], ["search", "検索", "Search"],
+  ["compose", "新しいポスト", "New post"], ["bookmark", "ブックマーク", "Bookmarks"],
+  ["lists", "リスト", "Lists"], ["settings", "設定", "Settings"],
+  ["help-dialog", "ショートカット一覧", "Shortcut help"],
 ];
+const defaultShortcutKeys = { home: "H", search: "/", compose: "N", bookmark: "B", lists: "L", settings: "S", "help-dialog": "?" };
+let shortcutKeys = (() => {
+  try { return { ...defaultShortcutKeys, ...JSON.parse(localStorage.getItem("blue-shortcuts") || "{}") }; }
+  catch { return { ...defaultShortcutKeys }; }
+})();
+let capturingShortcut = null;
+function saveShortcutKeys() {
+  try { localStorage.setItem("blue-shortcuts", JSON.stringify(shortcutKeys)); } catch {}
+}
+function shortcutToken(event) {
+  if (event.key.length === 1) return event.key.toUpperCase();
+  return event.key;
+}
+function renderShortcutSettings() {
+  $("#shortcuts-list").innerHTML = shortcutDefinitions.map(([action, ja, en]) => `<div><button type="button" class="shortcut-key ${capturingShortcut === action ? "capturing" : ""}" data-shortcut-action="${action}">${capturingShortcut === action ? marketText("入力…", "Press key…") : escape(shortcutKeys[action] || marketText("未設定", "None"))}</button><span>${lang === "ja" ? ja : en}</span></div>`).join("") + `<div><kbd>Esc</kbd><span>${marketText("画面を閉じる", "Close overlay")}</span></div>`;
+}
 function openShortcutsDialog() {
   if ($("#shortcuts-dialog").open) return;
-  $("#shortcuts-list").innerHTML = keyboardShortcuts.map(([key, , ja, en]) => `<div><kbd>${key}</kbd><span>${lang === "ja" ? ja : en}</span></div>`).join("");
+  capturingShortcut = null;
+  renderShortcutSettings();
   $("#shortcuts-dialog").showModal();
 }
 $("#open-shortcuts").onclick = () => {
   setDrawer(false);
   openShortcutsDialog();
 };
-$("#close-shortcuts").onclick = () => $("#shortcuts-dialog").close();
+$("#close-shortcuts").onclick = () => { capturingShortcut = null; $("#shortcuts-dialog").close(); };
+$("#shortcuts-dialog").addEventListener("close", () => { capturingShortcut = null; });
+$("#shortcuts-list").onclick = (e) => {
+  const button = e.target.closest("[data-shortcut-action]");
+  if (!button) return;
+  capturingShortcut = button.dataset.shortcutAction;
+  renderShortcutSettings();
+  $("[data-shortcut-action].capturing").focus();
+};
+$("#reset-shortcuts").onclick = () => {
+  shortcutKeys = { ...defaultShortcutKeys };
+  capturingShortcut = null;
+  saveShortcutKeys();
+  renderShortcutSettings();
+  notify(marketText("ショートカットを初期設定に戻しました", "Shortcut defaults restored"));
+};
 $("#app-drawer").addEventListener("click", (e) => {
   if (e.target.closest("[data-person]")) setDrawer(false);
 });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && !$("#drawer-overlay").hidden) setDrawer(false);
+  if (capturingShortcut) {
+    e.preventDefault();
+    if (e.key === "Escape") { capturingShortcut = null; renderShortcutSettings(); return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) return notify(marketText("修飾キーとの組み合わせには対応していません", "Modifier combinations are not supported"));
+    if (e.key === "Backspace" || e.key === "Delete") {
+      shortcutKeys[capturingShortcut] = "";
+    } else {
+      const token = shortcutToken(e);
+      if (["Tab", "Enter", " "].includes(token)) return notify(marketText("このキーは割り当てできません", "This key cannot be assigned"));
+      const duplicate = Object.entries(shortcutKeys).find(([action, key]) => action !== capturingShortcut && key === token);
+      if (duplicate) return notify(marketText("このキーはすでに使用されています", "This key is already assigned"));
+      shortcutKeys[capturingShortcut] = token;
+    }
+    capturingShortcut = null;
+    saveShortcutKeys();
+    renderShortcutSettings();
+    notify(marketText("ショートカットを保存しました", "Shortcut saved"));
+    return;
+  }
   if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || e.target.closest("input, textarea, select, [contenteditable='true']")) return;
-  const key = e.key.toLowerCase();
-  if (e.key === "?" || key === "/") e.preventDefault();
-  if (e.key === "?") return openShortcutsDialog();
-  if (key === "n") { navigate("home"); return $("#post-text").focus(); }
-  const destinations = { h: "home", "/": "search", b: "bookmark", l: "lists", s: "settings" };
-  if (destinations[key]) navigate(destinations[key]);
+  const token = shortcutToken(e);
+  const action = Object.keys(shortcutKeys).find((name) => shortcutKeys[name] === token);
+  if (!action) return;
+  e.preventDefault();
+  if (action === "help-dialog") return openShortcutsDialog();
+  if (action === "compose") { navigate("home"); return $("#post-text").focus(); }
+  navigate(action);
 });
 $("#account").onclick = () => navigate("user");
 $(".brand").onclick = (e) => {
