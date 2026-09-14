@@ -2726,6 +2726,10 @@ html[data-theme="darkblue"] .handle-input {
 .youtube-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .video-embed::after { content: "VIDEO"; position: absolute; z-index: 1; top: 8px; left: 8px; padding: 3px 7px; border-radius: 6px; color: #fff; background: #0009; font-size: .62rem; font-weight: 900; pointer-events: none; }.video-embed.youtube::after { content: "YouTube"; }.video-embed.vimeo::after { content: "Vimeo"; }.video-embed.niconico::after { content: "Niconico"; }
 .video-embed.bilibili::after { content: "Bilibili"; background: #00a1d6dd; }
+.video-embed.x, .video-embed.bluesky { aspect-ratio: auto; min-height: 460px; background: var(--surface); border: 1px solid var(--line); }
+.video-embed.x iframe, .video-embed.bluesky iframe { min-height: 460px; }
+.video-embed.x::after { content: "X"; }
+.video-embed.bluesky::after { content: "Bluesky"; background: #0878fadd; }
 .youtube-dialog { width: min(480px, calc(100% - 28px)); border: 0; border-radius: 20px; padding: 0; color: var(--text); background: var(--surface); }
 .youtube-dialog form { padding: 21px; }
 .youtube-dialog p { color: var(--muted); line-height: 1.6; }

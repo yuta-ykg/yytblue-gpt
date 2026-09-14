@@ -701,7 +701,7 @@ function helpCenterHTML() {
   const items = lang === "ja" ? [
     ["はじめに", "yytblueはどのようなサービスですか？", "投稿、画像・音声の共有、質問箱、ゲーム、交友関係などを楽しめるマイクロブログです。設定から言語や表示テーマも選べます。"],
     ["投稿", "ポスト、返信、リポスト、引用リポストの違いは？", "ポストは通常の投稿、返信は投稿への返答です。リポストは投稿を共有し、引用リポストでは自分のコメントを添えて共有できます。"],
-    ["画像・音声・動画", "画像、音声、動画を投稿できますか？", "画像は最大4枚、音声は録音または音声ファイルから1件追加できます。PDF、Word、Excel、PowerPointなどの文書は最大4件、1件10MBまで添付できます。YouTube、ニコニコ動画、Vimeo、BilibiliはURLを入力すると投稿内で再生できます。音声はほかのファイルと同時には追加できません。"],
+    ["画像・音声・埋め込み", "画像、音声、動画やSNS投稿を追加できますか？", "画像は最大4枚、音声は録音または音声ファイルから1件追加できます。PDF、Word、Excel、PowerPointなどの文書は最大4件、1件10MBまで添付できます。YouTube、ニコニコ動画、Vimeo、Bilibiliの動画と、X、Blueskyの投稿はURLを入力すると投稿内に埋め込めます。音声はほかのファイルと同時には追加できません。"],
     ["PWA", "アプリとしてホーム画面に追加するには？", "設定の「yytblueをアプリとして使う」から案内を確認できます。対応ブラウザではインストールボタンを使えます。iPhoneではSafariの共有メニューから「ホーム画面に追加」を選択してください。"],
     ["アカウント", "プロフィールと公開範囲を変更するには？", "プロフィール画面で表示名、ユーザー名、自己紹介、MBTIを編集できます。設定ではアカウントを非公開に切り替えられます。ユーザー名は重複できません。"],
     ["検索", "都道府県や政令指定都市を検索できますか？", "できます。都道府県名や政令指定都市名を検索すると、地域案内と公式サイトへのリンクが表示されます。"],
@@ -713,7 +713,7 @@ function helpCenterHTML() {
   ] : [
     ["Getting started", "What is yytblue?", "yytblue is a microblog for posts, image and audio sharing, questions, games, and personal relationships. You can also choose a language and theme in Settings."],
     ["Posting", "How do posts, replies, reposts, and quote reposts differ?", "A post is a regular update. A reply responds to a post. A repost shares it, while a quote repost shares it with your own comment."],
-    ["Media", "Can I post images, audio, or embedded videos?", "You can add up to four images, one audio recording or audio file, up to four PDF, Word, Excel, PowerPoint, or other supported documents of 10 MB each, or embed a YouTube, Niconico, Vimeo, or Bilibili video by entering its URL. Audio cannot be combined with other files."],
+    ["Media", "Can I post images, audio, videos, or social posts?", "You can add up to four images, one audio recording or audio file, up to four PDF, Word, Excel, PowerPoint, or other supported documents of 10 MB each, or embed YouTube, Niconico, Vimeo, and Bilibili videos and X or Bluesky posts by entering their URL. Audio cannot be combined with other files."],
     ["PWA", "How do I add yytblue to my home screen?", "See the guide under Use yytblue as an app in Settings. On supported browsers, use Install app. On iPhone, use Safari Share, then Add to Home Screen."],
     ["Account", "How do I change my profile or privacy?", "Edit your name, username, bio, and MBTI from Profile. Set your account to private in Settings. Usernames must be unique."],
     ["Search", "Can I search prefectures and designated cities?", "Yes. Searching a prefecture or designated city shows a regional guide and a link to its official website."],
@@ -883,12 +883,12 @@ function applyLanguage() {
   $("#add-poll").title = tr("addPoll");
   $("#add-poll").setAttribute("aria-label", tr("addPoll"));
   $("#add-poll span:first-child").innerHTML = icon("poll");
-  $("#add-youtube").title = marketText("動画URLを追加", "Add video URL");
+  $("#add-youtube").title = marketText("動画・SNS投稿のURLを追加", "Add video or social post URL");
   $("#add-youtube").setAttribute("aria-label", $("#add-youtube").title);
-  $("#add-youtube span:last-child").textContent = marketText("動画", "Video");
-  $("#youtube-dialog-title").textContent = marketText("動画を埋め込む", "Embed a video");
-  $("#youtube-dialog-help").textContent = marketText("YouTube、ニコニコ動画、Vimeo、BilibiliのURLを入力してください。", "Enter a YouTube, Niconico, Vimeo, or Bilibili URL.");
-  $("#youtube-add-button").textContent = marketText("追加する", "Add video");
+  $("#add-youtube span:last-child").textContent = marketText("埋め込み", "Embed");
+  $("#youtube-dialog-title").textContent = marketText("URLを埋め込む", "Embed a URL");
+  $("#youtube-dialog-help").textContent = marketText("YouTube、ニコニコ動画、Vimeo、Bilibili、X、Blueskyの投稿URLを入力してください。", "Enter a YouTube, Niconico, Vimeo, Bilibili, X, or Bluesky post URL.");
+  $("#youtube-add-button").textContent = marketText("追加する", "Add embed");
   $("#remove-poll").setAttribute("aria-label", tr("removePoll"));
   document
     .querySelectorAll("[data-poll-option]")
@@ -1611,6 +1611,16 @@ function videoFromUrl(value) {
       if (/^BV[0-9A-Za-z]{10}$/.test(queryBvid)) return { provider: "bilibili", id: queryBvid };
       if (/^\d{1,14}$/.test(queryAid)) return { provider: "bilibili", id: `av${queryAid}` };
     }
+    if (["x.com", "twitter.com", "mobile.twitter.com"].includes(host)) {
+      const match = url.pathname.match(/^\/[A-Za-z0-9_]{1,15}\/status\/(\d{5,25})(?:\/|$)/);
+      if (match) return { provider: "x", id: match[1] };
+    }
+    if (host === "bsky.app") {
+      const match = url.pathname.match(/^\/profile\/([^/]+)\/post\/([A-Za-z0-9]+)(?:\/|$)/);
+      if (match && /^(?:did:[a-z0-9:._-]+|[A-Za-z0-9][A-Za-z0-9.-]{0,252})$/.test(decodeURIComponent(match[1]))) {
+        return { provider: "bluesky", id: match[2], actor: decodeURIComponent(match[1]) };
+      }
+    }
     return null;
   } catch { return null; }
 }
@@ -1622,9 +1632,12 @@ function videoHTML(video) {
     vimeo: { test: /^\d{5,12}$/, src: `https://player.vimeo.com/video/${video.id}`, title: "Vimeo" },
     niconico: { test: /^(sm|so|nm)\d{1,12}$/, src: `https://embed.nicovideo.jp/watch/${video.id}`, title: marketText("ニコニコ動画", "Niconico") },
     bilibili: { test: /^(BV[0-9A-Za-z]{10}|av\d{1,14})$/i, src: `https://player.bilibili.com/player.html?${/^BV/.test(video.id) ? "bvid" : "aid"}=${video.id.replace(/^av/i, "")}`, title: "Bilibili" },
+    x: { test: /^\d{5,25}$/, src: `https://platform.twitter.com/embed/Tweet.html?id=${video.id}&theme=${theme === "dark" || theme === "navy" ? "dark" : "light"}`, title: marketText("Xの投稿", "X post") },
+    bluesky: { test: /^[A-Za-z0-9]+$/, src: `/api/embed/bluesky?url=${encodeURIComponent(`https://bsky.app/profile/${video.actor}/post/${video.id}`)}`, title: marketText("Blueskyの投稿", "Bluesky post"), actor: /^(?:did:[a-z0-9:._-]+|[A-Za-z0-9][A-Za-z0-9.-]{0,252})$/ },
   };
   const config = configs[video.provider];
-  return config?.test.test(video.id) ? `<div class="youtube-embed video-embed ${video.provider}"><iframe src="${config.src}" title="${config.title}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>` : "";
+  const valid = config?.test.test(video.id) && (!config.actor || config.actor.test(video.actor || ""));
+  return valid ? `<div class="youtube-embed video-embed ${video.provider}"><iframe src="${config.src}" title="${config.title}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>` : "";
 }
 function formatFileSize(bytes) {
   return bytes >= 1024 * 1024
@@ -1836,7 +1849,7 @@ function clearDocuments() {
 function updateYoutubePreview() {
   $("#youtube-preview").hidden = !composingYoutube;
   $("#youtube-preview").innerHTML = composingYoutube
-    ? `${videoHTML(composingYoutube)}<button type="button" data-remove-youtube aria-label="${marketText("動画を削除", "Remove video")}">×</button>`
+    ? `${videoHTML(composingYoutube)}<button type="button" data-remove-youtube aria-label="${marketText("埋め込みを削除", "Remove embed")}">×</button>`
     : "";
 }
 function clearYoutube() {
@@ -1955,7 +1968,7 @@ $("#youtube-form").onsubmit = (e) => {
   e.preventDefault();
   const video = videoFromUrl($("#youtube-url").value);
   if (!video) {
-    $("#youtube-error").textContent = marketText("対応している動画URLを入力してください。", "Enter a supported video URL.");
+    $("#youtube-error").textContent = marketText("対応している動画またはSNS投稿のURLを入力してください。", "Enter a supported video or social post URL.");
     return;
   }
   composingYoutube = video;
