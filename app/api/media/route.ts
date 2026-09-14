@@ -15,6 +15,9 @@ const allowedAudio = new Set([
   "audio/x-m4a",
   "audio/aac",
 ]);
+const allowedDocumentExtensions = new Set([
+  "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv", "rtf", "odt",
+]);
 
 export async function POST(request: Request) {
   if (!env.BUCKET)
@@ -25,10 +28,14 @@ export async function POST(request: Request) {
     .filter((value): value is File => value instanceof File);
   const audio = form.get("audio");
   const audioFile = audio instanceof File ? audio : null;
+  const documents = form
+    .getAll("documents")
+    .filter((value): value is File => value instanceof File);
   if (
-    (!images.length && !audioFile) ||
+    (!images.length && !audioFile && !documents.length) ||
     images.length > 4 ||
-    (images.length && audioFile)
+    documents.length > 4 ||
+    (audioFile && (images.length || documents.length))
   )
     return Response.json({ error: "invalid_count" }, { status: 400 });
   if (
@@ -42,6 +49,10 @@ export async function POST(request: Request) {
     (!allowedAudio.has(audioFile.type) || audioFile.size > 15 * 1024 * 1024)
   )
     return Response.json({ error: "invalid_audio" }, { status: 400 });
+  if (documents.some((file) => {
+    const extension = file.name.split(".").pop()?.toLowerCase() || "";
+    return !allowedDocumentExtensions.has(extension) || file.size > 10 * 1024 * 1024;
+  })) return Response.json({ error: "invalid_document" }, { status: 400 });
   const userId =
     request.headers.get("oai-authenticated-user-id") ?? "local-preview";
   const urls: string[] = [];
@@ -59,5 +70,13 @@ export async function POST(request: Request) {
     });
     return Response.json({ url: `/api/media/${key}` });
   }
-  return Response.json({ urls });
+  const savedDocuments: Array<{ url: string; name: string; type: string; size: number }> = [];
+  for (const file of documents) {
+    const key = `${userId}-${crypto.randomUUID()}`;
+    await env.BUCKET.put(key, file.stream(), {
+      httpMetadata: { contentType: file.type || "application/octet-stream" },
+    });
+    savedDocuments.push({ url: `/api/media/${key}`, name: file.name.slice(0, 120), type: file.type, size: file.size });
+  }
+  return Response.json({ urls, documents: savedDocuments });
 }

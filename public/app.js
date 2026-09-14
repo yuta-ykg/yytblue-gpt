@@ -295,11 +295,14 @@ function teenRestrictedPost(post) {
   return ["成人向け", "アダルト", "ポルノ", "性的", "裸", "ヌード", "闇バイト", "受け子", "口座売買", "オンラインカジノ", "オンカジ", "自殺", "死に方", "リスカ", "オーバードーズ", "違法薬物", "大麻", "覚醒剤", "adultcontent", "porn", "suicide", "selfharm", "onlinecasino", "illegaldrug"].some((word) => text.includes(word));
 }
 Object.assign(copy.ja, {
-  addImage: "画像・音声",
+  addImage: "添付",
   removeImage: "画像を削除",
   imagePreview: "選択した画像のプレビュー",
   imageError: "JPEG、PNG、WebP、GIFの画像を選択してください。",
   imageTooLarge: "画像は5MB以下にしてください。",
+  documentError: "PDF、Word、Excel、PowerPoint、テキストなどの文書を選択してください。",
+  documentTooLarge: "文書は1件10MB以下、最大4件までです。",
+  removeDocument: "文書を削除",
   addAudio: "音声",
   recordAudio: "録音",
   removeAudio: "音声を削除",
@@ -326,11 +329,14 @@ Object.assign(copy.ja, {
   pollError: "2つの選択肢を入力してください。",
 });
 Object.assign(copy.en, {
-  addImage: "Image or audio",
+  addImage: "Attach",
   removeImage: "Remove image",
   imagePreview: "Preview of selected image",
   imageError: "Choose a JPEG, PNG, WebP, or GIF image.",
   imageTooLarge: "Images must be 5 MB or smaller.",
+  documentError: "Choose a PDF, Word, Excel, PowerPoint, text, or supported document file.",
+  documentTooLarge: "Each document must be 10 MB or smaller, up to four files.",
+  removeDocument: "Remove document",
   addAudio: "Audio",
   recordAudio: "Record",
   removeAudio: "Remove audio",
@@ -493,6 +499,7 @@ let view = "home",
   composingStock = null,
   composingImages = [],
   composingAudio = null,
+  composingDocuments = [],
   composingYoutube = null,
   mediaRecorder = null,
   recordingChunks = [],
@@ -654,7 +661,7 @@ function helpCenterHTML() {
   const items = lang === "ja" ? [
     ["はじめに", "yytblueはどのようなサービスですか？", "投稿、画像・音声の共有、質問箱、ゲーム、交友関係などを楽しめるマイクロブログです。設定から言語や表示テーマも選べます。"],
     ["投稿", "ポスト、返信、リポスト、引用リポストの違いは？", "ポストは通常の投稿、返信は投稿への返答です。リポストは投稿を共有し、引用リポストでは自分のコメントを添えて共有できます。"],
-    ["画像・音声・動画", "画像、音声、YouTube動画を投稿できますか？", "画像は最大4枚、音声は録音または音声ファイルから1件追加できます。YouTube動画はURLを入力すると投稿内で再生できます。画像と音声は同じ投稿に同時には追加できません。"],
+    ["画像・音声・動画", "画像、音声、YouTube動画を投稿できますか？", "画像は最大4枚、音声は録音または音声ファイルから1件追加できます。PDF、Word、Excel、PowerPointなどの文書は最大4件、1件10MBまで添付できます。YouTube動画はURLを入力すると投稿内で再生できます。音声はほかのファイルと同時には追加できません。"],
     ["PWA", "アプリとしてホーム画面に追加するには？", "設定の「yytblueをアプリとして使う」から案内を確認できます。対応ブラウザではインストールボタンを使えます。iPhoneではSafariの共有メニューから「ホーム画面に追加」を選択してください。"],
     ["アカウント", "プロフィールと公開範囲を変更するには？", "プロフィール画面で表示名、ユーザー名、自己紹介、MBTIを編集できます。設定ではアカウントを非公開に切り替えられます。ユーザー名は重複できません。"],
     ["検索", "都道府県や政令指定都市を検索できますか？", "できます。都道府県名や政令指定都市名を検索すると、地域案内と公式サイトへのリンクが表示されます。"],
@@ -666,7 +673,7 @@ function helpCenterHTML() {
   ] : [
     ["Getting started", "What is yytblue?", "yytblue is a microblog for posts, image and audio sharing, questions, games, and personal relationships. You can also choose a language and theme in Settings."],
     ["Posting", "How do posts, replies, reposts, and quote reposts differ?", "A post is a regular update. A reply responds to a post. A repost shares it, while a quote repost shares it with your own comment."],
-    ["Media", "Can I post images, audio, or YouTube videos?", "You can add up to four images, one audio recording or audio file, or a YouTube video by entering its URL. Images and audio cannot be added to the same post."],
+    ["Media", "Can I post images, audio, or YouTube videos?", "You can add up to four images, one audio recording or audio file, up to four PDF, Word, Excel, PowerPoint, or other supported documents of 10 MB each, or a YouTube video by entering its URL. Audio cannot be combined with other files."],
     ["PWA", "How do I add yytblue to my home screen?", "See the guide under Use yytblue as an app in Settings. On supported browsers, use Install app. On iPhone, use Safari Share, then Add to Home Screen."],
     ["Account", "How do I change my profile or privacy?", "Edit your name, username, bio, and MBTI from Profile. Set your account to private in Settings. Usernames must be unique."],
     ["Search", "Can I search prefectures and designated cities?", "Yes. Searching a prefecture or designated city shows a regional guide and a link to its official website."],
@@ -1518,13 +1525,26 @@ function youtubeHTML(id) {
     ? `<div class="youtube-embed"><iframe src="https://www.youtube-nocookie.com/embed/${id}" title="${marketText("YouTube動画", "YouTube video")}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`
     : "";
 }
+function formatFileSize(bytes) {
+  return bytes >= 1024 * 1024
+    ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
+    : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+function documentsHTML(documents = []) {
+  return documents.length
+    ? `<div class="post-documents">${documents.map((file) => {
+        const extension = (file.name.split(".").pop() || "FILE").toUpperCase();
+        return `<a href="${escape(file.url)}" target="_blank" rel="noopener" download="${escape(file.name)}"><span class="document-type">${escape(extension.slice(0, 5))}</span><span><b>${escape(file.name)}</b><small>${formatFileSize(file.size || 0)} · ${marketText("開く・保存", "Open or download")}</small></span><span aria-hidden="true">↗</span></a>`;
+      }).join("")}</div>`
+    : "";
+}
 function postHTML(p, detail = false) {
   const u = users.find((u) => u.id === p.u);
   const images = p.images || (p.image ? [p.image] : []);
   const quoteImages =
     p.quoteOf?.images || (p.quoteOf?.image ? [p.quoteOf.image] : []);
   const question=p.qa?`<div class="post-question"><small>${marketText('質問箱への質問','Question box')}</small><p>${escape(p.qa.text)}</p><span>${p.qa.anonymous?marketText('匿名','Anonymous'):escape(p.qa.fromName || '')}</span></div>`:'';
-  return `<article class="post ${detail ? "post-detail" : ""}" id="post-${p.id}"${detail ? "" : ` data-open-post="${p.id}"`}><button data-person="${u.id}" aria-label="${u.name}のプロフィール" style="padding:0;align-self:flex-start">${avatar(u)}</button><div class="post-body"><div class="post-head"><button data-person="${u.id}" style="padding:0"><b>${u.name}</b></button>${u.id === "sota" ? '<span class="verified" aria-label="サンプル認証済み">✦</span>' : ""}${u.mbti ? `<span class="mbti-badge compact">${escape(u.mbti)}</span>` : ""}<span class="handle">@${u.handle}</span><button type="button" class="time post-detail-link" data-open-post="${p.id}" aria-label="${marketText("投稿詳細を表示", "View post details")}">· ${p.time}</button>${p.u === "you" ? `<button class="delete" data-action="delete" data-id="${p.id}">削除</button>` : ""}</div>${p.text ? `<p class="post-content">${escape(p.text).replace(/(#[^\s#]+)/g, '<span class="tag">$1</span>')}</p>` : ""}${question}${imageGridHTML(images)}${audioHTML(p.audio)}${youtubeHTML(p.youtubeId)}${stockPostCardHTML(p.stock)}${p.quoteOf ? `<div class="quote-card"><small>引用元 · ${users.find((u) => u.id === p.quoteOf.u)?.name || ""}</small>${p.quoteOf.text ? `<p>${escape(p.quoteOf.text)}</p>` : ""}${imageGridHTML(quoteImages, true)}${audioHTML(p.quoteOf.audio)}${youtubeHTML(p.quoteOf.youtubeId)}</div>` : ""}${pollHTML(p)}<div class="actions">${[
+  return `<article class="post ${detail ? "post-detail" : ""}" id="post-${p.id}"${detail ? "" : ` data-open-post="${p.id}"`}><button data-person="${u.id}" aria-label="${u.name}のプロフィール" style="padding:0;align-self:flex-start">${avatar(u)}</button><div class="post-body"><div class="post-head"><button data-person="${u.id}" style="padding:0"><b>${u.name}</b></button>${u.id === "sota" ? '<span class="verified" aria-label="サンプル認証済み">✦</span>' : ""}${u.mbti ? `<span class="mbti-badge compact">${escape(u.mbti)}</span>` : ""}<span class="handle">@${u.handle}</span><button type="button" class="time post-detail-link" data-open-post="${p.id}" aria-label="${marketText("投稿詳細を表示", "View post details")}">· ${p.time}</button>${p.u === "you" ? `<button class="delete" data-action="delete" data-id="${p.id}">削除</button>` : ""}</div>${p.text ? `<p class="post-content">${escape(p.text).replace(/(#[^\s#]+)/g, '<span class="tag">$1</span>')}</p>` : ""}${question}${imageGridHTML(images)}${documentsHTML(p.documents)}${audioHTML(p.audio)}${youtubeHTML(p.youtubeId)}${stockPostCardHTML(p.stock)}${p.quoteOf ? `<div class="quote-card"><small>引用元 · ${users.find((u) => u.id === p.quoteOf.u)?.name || ""}</small>${p.quoteOf.text ? `<p>${escape(p.quoteOf.text)}</p>` : ""}${imageGridHTML(quoteImages, true)}${documentsHTML(p.quoteOf.documents)}${audioHTML(p.quoteOf.audio)}${youtubeHTML(p.quoteOf.youtubeId)}</div>` : ""}${pollHTML(p)}<div class="actions">${[
     ["reply", tr("reply"), p.replies, ""],
     ["repeat", tr("repost"), p.reposts, p.reposted ? "reposted" : ""],
     ["heart", tr("like"), p.likes, p.liked ? "liked" : ""],
@@ -1551,13 +1571,14 @@ function createPost(
   audio = null,
   stock = null,
   youtubeId = null,
+  documents = [],
 ) {
   if (
     typeof text !== "string" ||
-    (!text.trim() && !images.length && !poll && !audio && !stock && !youtubeId) ||
+    (!text.trim() && !images.length && !poll && !audio && !stock && !youtubeId && !documents.length) ||
     [...text].length > 200
   )
-    throw Error("本文、画像、投票、音声、シェア、YouTube動画のいずれかを追加してください。");
+    throw Error("本文、画像、文書、投票、音声、シェア、YouTube動画のいずれかを追加してください。");
   const p = {
     id: Date.now(),
     u: "you",
@@ -1573,6 +1594,7 @@ function createPost(
     quoteOf,
     stock,
     youtubeId,
+    documents: documents.slice(0, 4),
   };
   if (parent) {
     const original = posts.find((p) => p.id === parent);
@@ -1616,6 +1638,7 @@ function updatePostButton() {
     (!$("#post-text").value.trim() &&
       !composingImages.length &&
       !composingAudio &&
+      !composingDocuments.length &&
       !composingStock &&
       !composingYoutube &&
       !pollReady()) ||
@@ -1634,6 +1657,15 @@ function clearImages() {
   composingImages = [];
   $("#post-image").value = "";
   renderImagePreview();
+  updatePostButton();
+}
+function renderDocumentPreview() {
+  $("#document-preview").hidden = !composingDocuments.length;
+  $("#document-preview").innerHTML = composingDocuments.map((file, index) => `<div><span class="document-type">${escape((file.name.split(".").pop() || "FILE").toUpperCase().slice(0, 5))}</span><span><b>${escape(file.name)}</b><small>${formatFileSize(file.size)}</small></span><button type="button" data-remove-document="${index}" aria-label="${tr("removeDocument")}">×</button></div>`).join("");
+}
+function clearDocuments() {
+  composingDocuments = [];
+  renderDocumentPreview();
   updatePostButton();
 }
 function updateYoutubePreview() {
@@ -1778,6 +1810,7 @@ $("#quote-picker-list").onclick = (event) => {
     text: original.text,
     images: original.images || [],
     audio: original.audio || null,
+    documents: original.documents || [],
   };
   $("#quote-picker-dialog").close();
   updateQuoteComposer();
@@ -1794,9 +1827,13 @@ $("#post-image").onchange = async (e) => {
   if (!files.length) return;
   const imageFiles = files.filter((file) => file.type.startsWith("image/"));
   const audioFiles = files.filter((file) => file.type.startsWith("audio/"));
+  const documentExtensions = new Set(["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv", "rtf", "odt"]);
+  const documentFiles = files.filter((file) => documentExtensions.has((file.name.split(".").pop() || "").toLowerCase()));
   if (
-    imageFiles.length + audioFiles.length !== files.length ||
-    audioFiles.length > 1
+    imageFiles.length + audioFiles.length + documentFiles.length !== files.length ||
+    audioFiles.length > 1 ||
+    (audioFiles.length && (imageFiles.length || documentFiles.length || composingImages.length || composingDocuments.length)) ||
+    (composingAudio && (imageFiles.length || documentFiles.length))
   ) {
     notify(
       audioFiles.length > 1
@@ -1805,6 +1842,11 @@ $("#post-image").onchange = async (e) => {
           : "Choose one audio file."
         : tr("imageError"),
     );
+    e.target.value = "";
+    return;
+  }
+  if (composingDocuments.length + documentFiles.length > 4 || documentFiles.some((file) => file.size > 10 * 1024 * 1024)) {
+    notify(tr("documentTooLarge"));
     e.target.value = "";
     return;
   }
@@ -1847,13 +1889,22 @@ $("#post-image").onchange = async (e) => {
       ),
     );
     composingImages.push(...added);
+    composingDocuments.push(...documentFiles);
     if (audioFiles[0]) selectAudio(audioFiles[0]);
     renderImagePreview();
+    renderDocumentPreview();
     updatePostButton();
   } catch {
     notify(tr("imageError"));
   }
   e.target.value = "";
+};
+$("#document-preview").onclick = (e) => {
+  const button = e.target.closest("[data-remove-document]");
+  if (!button) return;
+  composingDocuments.splice(Number(button.dataset.removeDocument), 1);
+  renderDocumentPreview();
+  updatePostButton();
 };
 $("#image-preview").onclick = (e) => {
   const b = e.target.closest("[data-remove-image]");
@@ -2030,6 +2081,14 @@ async function uploadAudio(audio) {
   if (!response.ok) throw Error("audio upload failed");
   return (await response.json()).url;
 }
+async function uploadDocuments(documents) {
+  if (!documents.length) return [];
+  const form = new FormData();
+  documents.forEach((file) => form.append("documents", file, file.name));
+  const response = await fetch("/api/media", { method: "POST", body: form });
+  if (!response.ok) throw Error("document upload failed");
+  return (await response.json()).documents || [];
+}
 $("#post-form").onsubmit = async (e) => {
   e.preventDefault();
   const quote = composingQuote
@@ -2038,6 +2097,7 @@ $("#post-form").onsubmit = async (e) => {
         text: composingQuote.text,
         images: composingQuote.images || [],
         audio: composingQuote.audio || null,
+        documents: composingQuote.documents || [],
         youtubeId: composingQuote.youtubeId || null,
       }
     : null;
@@ -2054,10 +2114,11 @@ $("#post-form").onsubmit = async (e) => {
   }
   const button = $("#post-button");
   button.disabled = true;
-  let uploadedImages, uploadedAudio;
+  let uploadedImages, uploadedAudio, uploadedDocuments;
   try {
     uploadedImages = await uploadImages(composingImages);
     uploadedAudio = await uploadAudio(composingAudio);
+    uploadedDocuments = await uploadDocuments(composingDocuments);
   } catch {
     notify(
       lang === "ja"
@@ -2076,6 +2137,7 @@ $("#post-form").onsubmit = async (e) => {
     uploadedAudio,
     composingStock,
     composingYoutube,
+    uploadedDocuments,
   );
   $("#post-text").value = "";
   composingQuote = null;
@@ -2083,6 +2145,7 @@ $("#post-form").onsubmit = async (e) => {
   composingYoutube = null;
   clearImages();
   clearAudio();
+  clearDocuments();
   updateYoutubePreview();
   clearPoll();
   updateQuoteComposer();

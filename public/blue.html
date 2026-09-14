@@ -78,6 +78,8 @@
               <div id="composer-stock-card"></div>
               <button type="button" id="cancel-stock" aria-label="シェア情報の添付を取り消す">×</button>
             </div>
+            <div id="youtube-preview" class="youtube-preview" hidden></div>
+            <div id="document-preview" class="document-preview" hidden></div>
             <div id="image-preview" class="image-preview" hidden></div>
             <div id="audio-preview" class="audio-preview" hidden>
               <audio id="audio-preview-player" controls></audio>
@@ -118,14 +120,14 @@
               <label
                 class="image-picker"
                 for="post-image"
-                title="画像・音声を追加"
+                title="画像・音声・文書を追加"
                 ><span aria-hidden="true">▧</span
-                ><span id="image-picker-label">画像</span></label
+                ><span id="image-picker-label">添付</span></label
               ><input
                 class="sr"
                 id="post-image"
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm,audio/x-m4a,audio/aac"
+                accept="image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm,audio/x-m4a,audio/aac,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.odt"
                 multiple
               /><button
                 type="button"
@@ -136,6 +138,14 @@
               >
                 <span aria-hidden="true">●</span
                 ><span id="record-audio-label">録音</span></button
+              ><button
+                type="button"
+                class="poll-toggle youtube-toggle"
+                id="add-youtube"
+                title="YouTube動画を追加"
+                aria-label="YouTube動画を追加"
+              >
+                <span aria-hidden="true">▶</span><span>YouTube</span></button
               ><button
                 type="button"
                 class="poll-toggle"
@@ -312,6 +322,19 @@
             完了
           </button>
         </div>
+      </form>
+    </dialog>
+    <dialog id="youtube-dialog" class="youtube-dialog">
+      <form id="youtube-form">
+        <div class="dialog-head">
+          <h2 id="youtube-dialog-title">YouTube動画を追加</h2>
+          <button type="button" id="close-youtube-dialog" aria-label="閉じる">×</button>
+        </div>
+        <p id="youtube-dialog-help">YouTube動画のURLを入力してください。</p>
+        <label for="youtube-url" class="sr">YouTube URL</label>
+        <input id="youtube-url" name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://www.youtube.com/watch?v=..." required>
+        <p id="youtube-error" class="youtube-error" role="alert"></p>
+        <button class="primary" id="youtube-add-button">追加する</button>
       </form>
     </dialog>
     <div id="toast" role="status"></div>
