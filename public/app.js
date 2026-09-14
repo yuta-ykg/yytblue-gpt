@@ -485,6 +485,7 @@ let questions = [
 let relationships = [];
 let lists = [];
 let selectedListId = null;
+let githubUser = null;
 let helpQuery = "";
 let view = "home",
   tab = "all",
@@ -615,6 +616,22 @@ async function loadServerState() {
   }
 }
 loadServerState();
+async function loadGitHubSession() {
+  try {
+    const response = await fetch("/api/auth/github/session", { cache: "no-store" });
+    githubUser = response.ok ? (await response.json()).user : null;
+    const result = new URLSearchParams(location.search).get("github");
+    if (result) {
+      history.replaceState({}, "", location.pathname);
+      notify(result === "connected" ? marketText("GitHubと接続しました", "Connected to GitHub") : marketText("GitHubログインに失敗しました", "GitHub sign-in failed"));
+    }
+    render();
+  } catch { githubUser = null; }
+}
+loadGitHubSession();
+function githubAccountHTML() {
+  return `<section class="settings-panel github-account"><span class="eyebrow">SIGN IN</span><h2>${marketText("GitHubログイン", "GitHub sign-in")}</h2>${githubUser ? `<div class="github-user">${githubUser.avatarUrl ? `<img src="${escape(githubUser.avatarUrl)}" alt="">` : `<span>GH</span>`}<div><b>${escape(githubUser.name)}</b><small>@${escape(githubUser.login)}</small></div><button type="button" data-github-logout>${marketText("ログアウト", "Sign out")}</button></div><p>${marketText("GitHubアカウントでログインしています。", "You are signed in with GitHub.")}</p>` : `<p>${marketText("GitHubアカウントを使ってログインできます。認証後もGitHubのパスワードはyytblueに共有されません。", "Sign in with your GitHub account. Your GitHub password is never shared with yytblue.")}</p><a class="github-login" href="/api/auth/github/start"><span aria-hidden="true">●</span>${marketText("GitHubでログイン", "Continue with GitHub")}</a>`}</section>`;
+}
 function navigate(v, u = "you") {
   view = v;
   profileUser = u;
@@ -1427,6 +1444,7 @@ function render() {
             )}</div><p class="language-note">${tr("iconSaved")}</p></section>`
         : "";
   if (settings) {
+    $("#search-area").insertAdjacentHTML("beforeend", githubAccountHTML());
     $("#search-area").insertAdjacentHTML("beforeend", pwaGuideHTML());
     $("#search-area").insertAdjacentHTML("beforeend", teenSettingsHTML());
   }
@@ -2351,6 +2369,15 @@ document.addEventListener("click", async (e) => {
     accountPrivate = !accountPrivate;
     render();
     notify(accountPrivate ? tr("privacySaved") : tr("privacyRemoved"));
+    return;
+  }
+  if (b.hasAttribute("data-github-logout")) {
+    const response = await fetch("/api/auth/github/logout", { method: "POST" });
+    if (response.ok) {
+      githubUser = null;
+      render();
+      notify(marketText("GitHubからログアウトしました", "Signed out of GitHub"));
+    }
     return;
   }
   if (b.hasAttribute("data-edit-profile")) {
