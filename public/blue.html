@@ -23,6 +23,7 @@
         <div class="drawer-head"><span class="drawer-brand" aria-hidden="true">✳</span><b id="drawer-title">メニュー</b><button type="button" id="close-drawer" aria-label="メニューを閉じる">×</button></div>
         <button type="button" class="drawer-account" data-person="you"><span class="avatar me">Y</span><span><b>あなた</b><small>@you</small></span></button>
         <nav id="drawer-nav" aria-label="ドロワーナビゲーション"></nav>
+        <button type="button" class="drawer-shortcuts" id="open-shortcuts"><span aria-hidden="true">⌨</span><span>ショートカット</span></button>
         <button type="button" class="primary drawer-compose" id="drawer-compose">＋ <span>ポストする</span></button>
       </aside>
     </div>
@@ -345,6 +346,11 @@
         <p id="youtube-error" class="youtube-error" role="alert"></p>
         <button class="primary" id="youtube-add-button">追加する</button>
       </form>
+    </dialog>
+    <dialog id="shortcuts-dialog" class="shortcuts-dialog">
+      <div class="dialog-head"><h2 id="shortcuts-title">キーボードショートカット</h2><button type="button" id="close-shortcuts" aria-label="閉じる">×</button></div>
+      <div id="shortcuts-list" class="shortcuts-list"></div>
+      <p id="shortcuts-note">文字入力中はショートカットが無効になります。</p>
     </dialog>
     <div id="toast" role="status"></div>
     <script src="creator-market.js"></script>

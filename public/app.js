@@ -816,6 +816,10 @@ function applyLanguage() {
   $("#open-drawer").setAttribute("aria-label", marketText("メニューを開く", "Open menu"));
   $("#close-drawer").setAttribute("aria-label", marketText("メニューを閉じる", "Close menu"));
   $("#drawer-compose").querySelector("span").textContent = tr("compose");
+  $("#open-shortcuts").querySelector("span:last-child").textContent = marketText("ショートカット", "Shortcuts");
+  $("#shortcuts-title").textContent = marketText("キーボードショートカット", "Keyboard shortcuts");
+  $("#shortcuts-note").textContent = marketText("文字入力中はショートカットが無効になります。", "Shortcuts are disabled while typing.");
+  $("#close-shortcuts").setAttribute("aria-label", marketText("閉じる", "Close"));
   document.querySelector(".demo-banner").textContent = tr("demo");
   document.querySelector('[data-tab="all"]').textContent = tr("recommended");
   document.querySelector('[data-tab="following"]').textContent =
@@ -2225,11 +2229,38 @@ $("#drawer-compose").onclick = () => {
   navigate("home");
   $("#post-text").focus();
 };
+const keyboardShortcuts = [
+  ["H", "home", "ホーム", "Home"],
+  ["/", "search", "検索", "Search"],
+  ["N", "compose", "新しいポスト", "New post"],
+  ["B", "bookmark", "ブックマーク", "Bookmarks"],
+  ["L", "lists", "リスト", "Lists"],
+  ["S", "settings", "設定", "Settings"],
+  ["?", "help-dialog", "ショートカット一覧", "Shortcut help"],
+  ["Esc", "close", "画面を閉じる", "Close overlay"],
+];
+function openShortcutsDialog() {
+  if ($("#shortcuts-dialog").open) return;
+  $("#shortcuts-list").innerHTML = keyboardShortcuts.map(([key, , ja, en]) => `<div><kbd>${key}</kbd><span>${lang === "ja" ? ja : en}</span></div>`).join("");
+  $("#shortcuts-dialog").showModal();
+}
+$("#open-shortcuts").onclick = () => {
+  setDrawer(false);
+  openShortcutsDialog();
+};
+$("#close-shortcuts").onclick = () => $("#shortcuts-dialog").close();
 $("#app-drawer").addEventListener("click", (e) => {
   if (e.target.closest("[data-person]")) setDrawer(false);
 });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && !$("#drawer-overlay").hidden) setDrawer(false);
+  if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || e.target.closest("input, textarea, select, [contenteditable='true']")) return;
+  const key = e.key.toLowerCase();
+  if (e.key === "?" || key === "/") e.preventDefault();
+  if (e.key === "?") return openShortcutsDialog();
+  if (key === "n") { navigate("home"); return $("#post-text").focus(); }
+  const destinations = { h: "home", "/": "search", b: "bookmark", l: "lists", s: "settings" };
+  if (destinations[key]) navigate(destinations[key]);
 });
 $("#account").onclick = () => navigate("user");
 $(".brand").onclick = (e) => {
