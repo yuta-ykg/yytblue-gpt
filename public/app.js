@@ -503,6 +503,9 @@ let view = "home",
   composingImages = [],
   composingAudio = null,
   composingDocuments = [],
+  editingImageIndex = -1,
+  imageEditorSource = null,
+  imageEditorTransform = null,
   composingYoutube = null,
   mediaRecorder = null,
   recordingChunks = [],
@@ -832,6 +835,11 @@ function applyLanguage() {
   $("#document-format option[value='rtf']").textContent = marketText("RTF（Word対応）", "RTF (Word compatible)");
   $("#document-create-help").textContent = marketText("作成後、投稿への添付ファイルとして追加されます。", "The generated file will be attached to your post.");
   $("#document-create-button").textContent = marketText("作成して添付", "Create and attach");
+  $("#image-editor-title").textContent = marketText("画像を編集", "Edit image");
+  $("#brightness-label").textContent = marketText("明るさ", "Brightness");
+  $("#contrast-label").textContent = marketText("コントラスト", "Contrast");
+  $("#reset-image-editor").textContent = marketText("元に戻す", "Reset");
+  $("#save-image-editor").textContent = marketText("編集を適用", "Apply edits");
   $("#close-shortcuts").setAttribute("aria-label", marketText("閉じる", "Close"));
   document.querySelector(".demo-banner").textContent = tr("demo");
   document.querySelector('[data-tab="all"]').textContent = tr("recommended");
@@ -1711,7 +1719,7 @@ function renderImagePreview() {
   $("#image-preview").innerHTML = composingImages
     .map(
       (src, i) =>
-        `<div><img src="${src}" alt="${tr("imagePreview")} ${i + 1}"><button type="button" data-remove-image="${i}" aria-label="${tr("removeImage")}">×</button></div>`,
+        `<div><img src="${src}" alt="${tr("imagePreview")} ${i + 1}"><button type="button" class="edit-preview-image" data-edit-image="${i}" aria-label="${marketText("画像を編集", "Edit image")}">✎</button><button type="button" data-remove-image="${i}" aria-label="${tr("removeImage")}">×</button></div>`,
     )
     .join("");
 }
@@ -1720,6 +1728,54 @@ function clearImages() {
   $("#post-image").value = "";
   renderImagePreview();
   updatePostButton();
+}
+function drawImageEditor() {
+  if (!imageEditorSource || !imageEditorTransform) return;
+  const canvas = $("#image-editor-canvas");
+  const source = imageEditorSource;
+  const state = imageEditorTransform;
+  const squareSize = Math.min(source.naturalWidth, source.naturalHeight);
+  const cropWidth = state.square ? squareSize : source.naturalWidth;
+  const cropHeight = state.square ? squareSize : source.naturalHeight;
+  const rotated = Math.abs(state.rotation % 180) === 90;
+  const maximum = 1800;
+  const scale = Math.min(1, maximum / Math.max(cropWidth, cropHeight));
+  const drawWidth = Math.round(cropWidth * scale), drawHeight = Math.round(cropHeight * scale);
+  canvas.width = rotated ? drawHeight : drawWidth;
+  canvas.height = rotated ? drawWidth : drawHeight;
+  const context = canvas.getContext("2d");
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.save();
+  context.translate(canvas.width / 2, canvas.height / 2);
+  context.rotate((state.rotation * Math.PI) / 180);
+  context.scale(state.flip ? -1 : 1, 1);
+  context.filter = `brightness(${state.brightness}%) contrast(${state.contrast}%)`;
+  const sourceX = (source.naturalWidth - cropWidth) / 2;
+  const sourceY = (source.naturalHeight - cropHeight) / 2;
+  context.drawImage(source, sourceX, sourceY, cropWidth, cropHeight, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+  context.restore();
+  $("#brightness-output").textContent = `${state.brightness}%`;
+  $("#contrast-output").textContent = `${state.contrast}%`;
+}
+function resetImageEditor() {
+  imageEditorTransform = { rotation: 0, flip: false, square: false, brightness: 100, contrast: 100 };
+  $("#image-brightness").value = "100";
+  $("#image-contrast").value = "100";
+  document.querySelectorAll(".image-editor-tools .active").forEach((button) => button.classList.remove("active"));
+  drawImageEditor();
+}
+function openImageEditor(index) {
+  const sourceUrl = composingImages[index];
+  if (!sourceUrl) return;
+  const image = new Image();
+  image.onload = () => {
+    editingImageIndex = index;
+    imageEditorSource = image;
+    resetImageEditor();
+    $("#image-editor-dialog").showModal();
+  };
+  image.onerror = () => notify(marketText("画像を読み込めませんでした", "Could not load image"));
+  image.src = sourceUrl;
 }
 function renderDocumentPreview() {
   $("#document-preview").hidden = !composingDocuments.length;
@@ -2007,11 +2063,34 @@ $("#document-preview").onclick = (e) => {
   updatePostButton();
 };
 $("#image-preview").onclick = (e) => {
+  const editButton = e.target.closest("[data-edit-image]");
+  if (editButton) return openImageEditor(Number(editButton.dataset.editImage));
   const b = e.target.closest("[data-remove-image]");
   if (!b) return;
   composingImages.splice(Number(b.dataset.removeImage), 1);
   renderImagePreview();
   updatePostButton();
+};
+$("#close-image-editor").onclick = () => $("#image-editor-dialog").close();
+$("#reset-image-editor").onclick = resetImageEditor;
+document.querySelector(".image-editor-tools").onclick = (e) => {
+  const button = e.target.closest("[data-image-edit]");
+  if (!button || !imageEditorTransform) return;
+  if (button.dataset.imageEdit === "rotate-left") imageEditorTransform.rotation -= 90;
+  if (button.dataset.imageEdit === "rotate-right") imageEditorTransform.rotation += 90;
+  if (button.dataset.imageEdit === "flip") imageEditorTransform.flip = !imageEditorTransform.flip;
+  if (button.dataset.imageEdit === "square") imageEditorTransform.square = !imageEditorTransform.square;
+  button.classList.toggle("active", button.dataset.imageEdit === "square" && imageEditorTransform.square);
+  drawImageEditor();
+};
+$("#image-brightness").oninput = (e) => { imageEditorTransform.brightness = Number(e.target.value); drawImageEditor(); };
+$("#image-contrast").oninput = (e) => { imageEditorTransform.contrast = Number(e.target.value); drawImageEditor(); };
+$("#save-image-editor").onclick = () => {
+  if (editingImageIndex < 0) return;
+  composingImages[editingImageIndex] = $("#image-editor-canvas").toDataURL("image/jpeg", 0.9);
+  renderImagePreview();
+  $("#image-editor-dialog").close();
+  notify(marketText("画像の編集を適用しました", "Image edits applied"));
 };
 $("#remove-audio").onclick = clearAudio;
 function updateRecordingTime() {

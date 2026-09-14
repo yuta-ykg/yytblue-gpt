@@ -371,6 +371,16 @@
         <button class="primary" id="document-create-button">作成して添付</button>
       </form>
     </dialog>
+    <dialog id="image-editor-dialog" class="image-editor-dialog">
+      <div class="dialog-head"><h2 id="image-editor-title">画像を編集</h2><button type="button" id="close-image-editor" aria-label="閉じる">×</button></div>
+      <div class="image-editor-stage"><canvas id="image-editor-canvas"></canvas></div>
+      <div class="image-editor-tools">
+        <button type="button" data-image-edit="rotate-left" title="左に回転">↶</button><button type="button" data-image-edit="rotate-right" title="右に回転">↷</button><button type="button" data-image-edit="flip" title="左右反転">↔</button><button type="button" data-image-edit="square" title="正方形にトリミング">□</button>
+      </div>
+      <label class="image-slider"><span id="brightness-label">明るさ</span><input id="image-brightness" type="range" min="50" max="150" value="100"><output id="brightness-output">100%</output></label>
+      <label class="image-slider"><span id="contrast-label">コントラスト</span><input id="image-contrast" type="range" min="50" max="150" value="100"><output id="contrast-output">100%</output></label>
+      <div class="image-editor-actions"><button type="button" id="reset-image-editor">元に戻す</button><button type="button" class="primary" id="save-image-editor">編集を適用</button></div>
+    </dialog>
     <div id="toast" role="status"></div>
     <script src="creator-market.js"></script>
     <script src="shared-market.js"></script>
