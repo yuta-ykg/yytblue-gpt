@@ -61,6 +61,7 @@
           <button class="active" data-tab="all">おすすめ</button
           ><button data-tab="following">フォロー中</button>
         </div>
+        <section id="stories" class="stories" aria-label="ストーリーズ"></section>
         <section class="composer" id="composer">
           <span class="avatar me">Y</span>
           <form id="post-form">
@@ -354,6 +355,21 @@
         <p id="youtube-error" class="youtube-error" role="alert"></p>
         <button class="primary" id="youtube-add-button">追加する</button>
       </form>
+    </dialog>
+    <dialog id="story-create-dialog" class="story-dialog">
+      <form id="story-create-form">
+        <div class="dialog-head"><h2 id="story-create-title">ストーリーを作成</h2><button type="button" id="close-story-create" aria-label="閉じる">×</button></div>
+        <p id="story-create-help">24時間表示されます。画像またはメッセージを追加してください。</p>
+        <label class="story-image-picker"><span aria-hidden="true">▧</span><span id="story-image-label">画像を選択</span><input id="story-image" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label>
+        <div id="story-image-preview" class="story-image-preview" hidden></div>
+        <label><span id="story-text-label">メッセージ</span><textarea id="story-text" name="text" maxlength="120" rows="3" placeholder="ストーリーにひとこと"></textarea></label>
+        <button class="primary" id="story-publish-button">公開する</button>
+      </form>
+    </dialog>
+    <dialog id="story-viewer" class="story-viewer">
+      <div class="story-viewer-progress"><span></span></div>
+      <button type="button" id="close-story-viewer" class="story-viewer-close" aria-label="閉じる">×</button>
+      <div id="story-viewer-content"></div>
     </dialog>
     <dialog id="shortcuts-dialog" class="shortcuts-dialog">
       <div class="dialog-head"><h2 id="shortcuts-title">キーボードショートカット</h2><button type="button" id="close-shortcuts" aria-label="閉じる">×</button></div>

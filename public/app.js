@@ -482,6 +482,11 @@ let posts = [
 let questions = [
   { id: 1, to: "you", from: "nagi", anonymous: true, text: "最近いちばん楽しかったことは何ですか？", time: "サンプル", answer: null },
 ];
+let stories = [
+  { id: 1, u: "nagi", text: "朝の散歩で見つけた景色", createdAt: Date.now() - 32 * 60 * 1000 },
+  { id: 2, u: "sota", text: "今日も少しずつ、つくっています。", createdAt: Date.now() - 95 * 60 * 1000 },
+  { id: 3, u: "mio", text: "いま聴いているプレイリスト 🎧", createdAt: Date.now() - 3 * 60 * 60 * 1000 },
+];
 let relationships = [];
 let lists = [];
 let selectedListId = null;
@@ -547,12 +552,13 @@ async function loadShareholderLeaders() {
     shareholderLeaders = { nagi: [], sota: [], haru: [], mio: [] };
   }
 }
-copy.ja.demo = "投稿・画像・投票・質問箱は保存され、再読み込み後も残ります。";
-copy.en.demo = "Posts, images, polls, and questions are saved after reloading.";
+copy.ja.demo = "投稿・ストーリーズ・画像・投票・質問箱は保存されます。ストーリーズは24時間で消えます。";
+copy.en.demo = "Posts, stories, images, polls, and questions are saved. Stories disappear after 24 hours.";
 function stateSnapshot() {
   const self = users.find((u) => u.id === "you");
   return {
     posts,
+    stories: stories.filter((story) => story.createdAt > Date.now() - 24 * 60 * 60 * 1000),
     questions,
     relationships,
     lists,
@@ -598,6 +604,7 @@ async function loadServerState() {
     const { state } = await response.json();
     if (state) {
       if (Array.isArray(state.posts)) posts = state.posts;
+      if (Array.isArray(state.stories)) stories = state.stories;
       if (Array.isArray(state.questions)) questions = state.questions;
       if (Array.isArray(state.relationships)) relationships = state.relationships;
       if (Array.isArray(state.lists)) lists = state.lists;
@@ -701,6 +708,7 @@ function helpCenterHTML() {
   const items = lang === "ja" ? [
     ["はじめに", "yytblueはどのようなサービスですか？", "投稿、画像・音声の共有、質問箱、ゲーム、交友関係などを楽しめるマイクロブログです。設定から言語や表示テーマも選べます。"],
     ["投稿", "ポスト、返信、リポスト、引用リポストの違いは？", "ポストは通常の投稿、返信は投稿への返答です。リポストは投稿を共有し、引用リポストでは自分のコメントを添えて共有できます。"],
+    ["ストーリーズ", "ストーリーはいつまで表示されますか？", "画像または短いメッセージを公開でき、24時間後に自動的に表示されなくなります。自分のストーリーは閲覧画面からいつでも削除できます。"],
     ["画像・音声・埋め込み", "画像、音声、動画やSNS投稿を追加できますか？", "画像は最大4枚、音声は録音または音声ファイルから1件追加できます。PDF、Word、Excel、PowerPointなどの文書は最大4件、1件10MBまで添付できます。YouTube、ニコニコ動画、Vimeo、Bilibiliの動画と、X、Blueskyの投稿はURLを入力すると投稿内に埋め込めます。音声はほかのファイルと同時には追加できません。"],
     ["PWA", "アプリとしてホーム画面に追加するには？", "設定の「yytblueをアプリとして使う」から案内を確認できます。対応ブラウザではインストールボタンを使えます。iPhoneではSafariの共有メニューから「ホーム画面に追加」を選択してください。"],
     ["アカウント", "プロフィールと公開範囲を変更するには？", "プロフィール画面で表示名、ユーザー名、自己紹介、MBTIを編集できます。設定ではアカウントを非公開に切り替えられます。ユーザー名は重複できません。"],
@@ -713,6 +721,7 @@ function helpCenterHTML() {
   ] : [
     ["Getting started", "What is yytblue?", "yytblue is a microblog for posts, image and audio sharing, questions, games, and personal relationships. You can also choose a language and theme in Settings."],
     ["Posting", "How do posts, replies, reposts, and quote reposts differ?", "A post is a regular update. A reply responds to a post. A repost shares it, while a quote repost shares it with your own comment."],
+    ["Stories", "How long does a story remain visible?", "Share an image or short message for 24 hours. You can delete your own story at any time from the story viewer."],
     ["Media", "Can I post images, audio, videos, or social posts?", "You can add up to four images, one audio recording or audio file, up to four PDF, Word, Excel, PowerPoint, or other supported documents of 10 MB each, or embed YouTube, Niconico, Vimeo, and Bilibili videos and X or Bluesky posts by entering their URL. Audio cannot be combined with other files."],
     ["PWA", "How do I add yytblue to my home screen?", "See the guide under Use yytblue as an app in Settings. On supported browsers, use Install app. On iPhone, use Safari Share, then Add to Home Screen."],
     ["Account", "How do I change my profile or privacy?", "Edit your name, username, bio, and MBTI from Profile. Set your account to private in Settings. Usernames must be unique."],
@@ -889,6 +898,13 @@ function applyLanguage() {
   $("#youtube-dialog-title").textContent = marketText("URLを埋め込む", "Embed a URL");
   $("#youtube-dialog-help").textContent = marketText("YouTube、ニコニコ動画、Vimeo、Bilibili、X、Blueskyの投稿URLを入力してください。", "Enter a YouTube, Niconico, Vimeo, Bilibili, X, or Bluesky post URL.");
   $("#youtube-add-button").textContent = marketText("追加する", "Add embed");
+  $("#stories").setAttribute("aria-label", marketText("ストーリーズ", "Stories"));
+  $("#story-create-title").textContent = marketText("ストーリーを作成", "Create story");
+  $("#story-create-help").textContent = marketText("24時間表示されます。画像またはメッセージを追加してください。", "Visible for 24 hours. Add an image or message.");
+  $("#story-image-label").textContent = marketText("画像を選択", "Choose image");
+  $("#story-text-label").textContent = marketText("メッセージ", "Message");
+  $("#story-text").placeholder = marketText("ストーリーにひとこと", "Add a message to your story");
+  $("#story-publish-button").textContent = marketText("公開する", "Publish");
   $("#remove-poll").setAttribute("aria-label", tr("removePoll"));
   document
     .querySelectorAll("[data-poll-option]")
@@ -1441,6 +1457,7 @@ document.addEventListener("submit", (e) => {
   }
 });
 function render() {
+  stories = stories.filter((story) => Number(story.createdAt) > Date.now() - 24 * 60 * 60 * 1000);
   if (teenMode && view === "market") view = "home";
   const names = {
     home: tr("home"),
@@ -1470,6 +1487,8 @@ function render() {
     .map(([id, n]) => `<button data-view="${id}" class="${view === id ? "selected" : ""}" aria-label="${n}" ${view === id ? 'aria-current="page"' : ""}>${icon(id)}<span>${n}</span></button>`)
     .join("");
   $("#tabs").hidden = view !== "home";
+  $("#stories").hidden = view !== "home";
+  if (view === "home") renderStories();
   $("#composer").style.display = view === "home" ? "flex" : "none";
   const settings = view === "settings",
     standalone = settings || view === "market" || view === "questions" || view === "games" || view === "diagnosis" || view === "relationships" || view === "help" || (view === "lists" && !selectedListId) || (view === "search" && !query);
@@ -1563,6 +1582,23 @@ function render() {
   });
   applyLanguage();
   persistState();
+}
+function storyAge(createdAt) {
+  const minutes = Math.max(1, Math.floor((Date.now() - createdAt) / 60000));
+  if (minutes < 60) return marketText(`${minutes}分前`, `${minutes}m ago`);
+  return marketText(`${Math.floor(minutes / 60)}時間前`, `${Math.floor(minutes / 60)}h ago`);
+}
+function renderStories() {
+  const active = stories.filter((story) => story.createdAt > Date.now() - 86400000);
+  $("#stories").innerHTML = `<button type="button" class="story-add" data-add-story><span class="story-ring"><span class="avatar me">Y</span><b>＋</b></span><small>${marketText("追加", "Add")}</small></button>${active.map((story) => {
+    const user = users.find((item) => item.id === story.u) || users.find((item) => item.id === "you");
+    return `<button type="button" class="story-item" data-story-id="${story.id}"><span class="story-ring">${story.image ? `<img src="${escape(story.image)}" alt="">` : avatar(user)}</span><small>${escape(user.id === "you" ? marketText("あなた", "You") : user.name)}</small></button>`;
+  }).join("")}`;
+}
+function openStory(story) {
+  const user = users.find((item) => item.id === story.u) || users.find((item) => item.id === "you");
+  $("#story-viewer-content").innerHTML = `${story.image ? `<img src="${escape(story.image)}" alt="${escape(user.name)}のストーリー">` : `<div class="story-text-only">${escape(story.text || "✳")}</div>`}<div class="story-viewer-caption"><span>${avatar(user)}<b>${escape(user.name)}</b><small>${storyAge(story.createdAt)}</small></span>${story.image && story.text ? `<p>${escape(story.text)}</p>` : ""}${story.u === "you" ? `<button type="button" data-delete-story="${story.id}">${marketText("削除", "Delete")}</button>` : ""}</div>`;
+  $("#story-viewer").showModal();
 }
 function pollHTML(p) {
   if (!p.poll) return "";
@@ -2591,6 +2627,27 @@ document.addEventListener("click", async (e) => {
   notify(lang === "ja" ? "投票しました" : "Vote submitted");
 });
 document.addEventListener("click", async (e) => {
+  const addStory = e.target.closest("[data-add-story]");
+  if (addStory) {
+    $("#story-create-form").reset();
+    $("#story-image-preview").hidden = true;
+    $("#story-image-preview").innerHTML = "";
+    $("#story-create-dialog").showModal();
+    return;
+  }
+  const storyButton = e.target.closest("[data-story-id]");
+  if (storyButton) {
+    const story = stories.find((item) => item.id === Number(storyButton.dataset.storyId));
+    if (story) openStory(story);
+    return;
+  }
+  const deleteStory = e.target.closest("[data-delete-story]");
+  if (deleteStory) {
+    stories = stories.filter((item) => item.id !== Number(deleteStory.dataset.deleteStory));
+    $("#story-viewer").close();
+    persistState(); render(); notify(marketText("ストーリーを削除しました", "Story deleted"));
+    return;
+  }
   const postTarget = e.target.closest("[data-open-post]");
   if (postTarget && !e.target.closest("button, a, input, select, textarea, audio, iframe, label")) {
     openPostDetail(postTarget.dataset.openPost);
@@ -2790,6 +2847,36 @@ document.addEventListener("click", async (e) => {
     render();
   }
 });
+$("#close-story-create").onclick = () => $("#story-create-dialog").close();
+$("#close-story-viewer").onclick = () => $("#story-viewer").close();
+$("#story-image").onchange = (e) => {
+  const file = e.target.files?.[0];
+  const preview = $("#story-image-preview");
+  if (!file) { preview.hidden = true; preview.innerHTML = ""; return; }
+  if (file.size > 8 * 1024 * 1024) { e.target.value = ""; return notify(marketText("画像は8MB以下にしてください", "Choose an image up to 8 MB")); }
+  const url = URL.createObjectURL(file);
+  preview.hidden = false;
+  preview.innerHTML = `<img src="${url}" alt="${marketText("ストーリー画像のプレビュー", "Story image preview")}">`;
+};
+$("#story-create-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const text = $("#story-text").value.trim();
+  const file = $("#story-image").files?.[0];
+  if (!text && !file) return notify(marketText("画像またはメッセージを追加してください", "Add an image or message"));
+  e.submitter.disabled = true;
+  try {
+    let image = null;
+    if (file) {
+      const form = new FormData(); form.append("images", file, file.name);
+      const response = await fetch("/api/media", { method: "POST", body: form });
+      if (!response.ok) throw Error("upload");
+      image = (await response.json()).urls?.[0] || null;
+    }
+    stories.unshift({ id: Date.now(), u: "you", text, image, createdAt: Date.now() });
+    $("#story-create-dialog").close(); persistState(); render(); notify(marketText("ストーリーを公開しました", "Story published"));
+  } catch { notify(marketText("ストーリーを公開できませんでした", "Could not publish story")); }
+  finally { e.submitter.disabled = false; }
+};
 document.addEventListener("submit", (e) => {
   if (e.target.id !== "list-create-form") return;
   e.preventDefault();
