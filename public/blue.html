@@ -8,6 +8,13 @@
       name="description"
       content="日々の発見や好きなことを、気軽に。日本語のマイクロブログ体験。"
     />
+    <meta name="theme-color" content="#1265ed" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="yytblue" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -312,5 +319,10 @@
     <script src="shared-market.js"></script>
     <script src="app.js"></script>
     <script src="games.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js"));
+      }
+    </script>
   </body>
 </html>
