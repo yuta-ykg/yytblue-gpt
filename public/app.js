@@ -701,7 +701,7 @@ function helpCenterHTML() {
   const items = lang === "ja" ? [
     ["はじめに", "yytblueはどのようなサービスですか？", "投稿、画像・音声の共有、質問箱、ゲーム、交友関係などを楽しめるマイクロブログです。設定から言語や表示テーマも選べます。"],
     ["投稿", "ポスト、返信、リポスト、引用リポストの違いは？", "ポストは通常の投稿、返信は投稿への返答です。リポストは投稿を共有し、引用リポストでは自分のコメントを添えて共有できます。"],
-    ["画像・音声・動画", "画像、音声、YouTube動画を投稿できますか？", "画像は最大4枚、音声は録音または音声ファイルから1件追加できます。PDF、Word、Excel、PowerPointなどの文書は最大4件、1件10MBまで添付できます。YouTube動画はURLを入力すると投稿内で再生できます。音声はほかのファイルと同時には追加できません。"],
+    ["画像・音声・動画", "画像、音声、動画を投稿できますか？", "画像は最大4枚、音声は録音または音声ファイルから1件追加できます。PDF、Word、Excel、PowerPointなどの文書は最大4件、1件10MBまで添付できます。YouTube、ニコニコ動画、VimeoはURLを入力すると投稿内で再生できます。音声はほかのファイルと同時には追加できません。"],
     ["PWA", "アプリとしてホーム画面に追加するには？", "設定の「yytblueをアプリとして使う」から案内を確認できます。対応ブラウザではインストールボタンを使えます。iPhoneではSafariの共有メニューから「ホーム画面に追加」を選択してください。"],
     ["アカウント", "プロフィールと公開範囲を変更するには？", "プロフィール画面で表示名、ユーザー名、自己紹介、MBTIを編集できます。設定ではアカウントを非公開に切り替えられます。ユーザー名は重複できません。"],
     ["検索", "都道府県や政令指定都市を検索できますか？", "できます。都道府県名や政令指定都市名を検索すると、地域案内と公式サイトへのリンクが表示されます。"],
@@ -713,7 +713,7 @@ function helpCenterHTML() {
   ] : [
     ["Getting started", "What is yytblue?", "yytblue is a microblog for posts, image and audio sharing, questions, games, and personal relationships. You can also choose a language and theme in Settings."],
     ["Posting", "How do posts, replies, reposts, and quote reposts differ?", "A post is a regular update. A reply responds to a post. A repost shares it, while a quote repost shares it with your own comment."],
-    ["Media", "Can I post images, audio, or YouTube videos?", "You can add up to four images, one audio recording or audio file, up to four PDF, Word, Excel, PowerPoint, or other supported documents of 10 MB each, or a YouTube video by entering its URL. Audio cannot be combined with other files."],
+    ["Media", "Can I post images, audio, or embedded videos?", "You can add up to four images, one audio recording or audio file, up to four PDF, Word, Excel, PowerPoint, or other supported documents of 10 MB each, or embed a YouTube, Niconico, or Vimeo video by entering its URL. Audio cannot be combined with other files."],
     ["PWA", "How do I add yytblue to my home screen?", "See the guide under Use yytblue as an app in Settings. On supported browsers, use Install app. On iPhone, use Safari Share, then Add to Home Screen."],
     ["Account", "How do I change my profile or privacy?", "Edit your name, username, bio, and MBTI from Profile. Set your account to private in Settings. Usernames must be unique."],
     ["Search", "Can I search prefectures and designated cities?", "Yes. Searching a prefecture or designated city shows a regional guide and a link to its official website."],
@@ -883,10 +883,11 @@ function applyLanguage() {
   $("#add-poll").title = tr("addPoll");
   $("#add-poll").setAttribute("aria-label", tr("addPoll"));
   $("#add-poll span:first-child").innerHTML = icon("poll");
-  $("#add-youtube").title = marketText("YouTube動画を追加", "Add YouTube video");
+  $("#add-youtube").title = marketText("動画URLを追加", "Add video URL");
   $("#add-youtube").setAttribute("aria-label", $("#add-youtube").title);
-  $("#youtube-dialog-title").textContent = marketText("YouTube動画を追加", "Add YouTube video");
-  $("#youtube-dialog-help").textContent = marketText("YouTube動画のURLを入力してください。", "Enter a YouTube video URL.");
+  $("#add-youtube span:last-child").textContent = marketText("動画", "Video");
+  $("#youtube-dialog-title").textContent = marketText("動画を埋め込む", "Embed a video");
+  $("#youtube-dialog-help").textContent = marketText("YouTube、ニコニコ動画、VimeoのURLを入力してください。", "Enter a YouTube, Niconico, or Vimeo URL.");
   $("#youtube-add-button").textContent = marketText("追加する", "Add video");
   $("#remove-poll").setAttribute("aria-label", tr("removePoll"));
   document
@@ -1582,7 +1583,7 @@ function audioHTML(src) {
     ? `<div class="post-audio"><span aria-hidden="true">♪</span><audio controls preload="metadata" src="${escape(src)}"></audio></div>`
     : "";
 }
-function youtubeIdFromUrl(value) {
+function videoFromUrl(value) {
   try {
     const url = new URL(String(value).trim());
     const host = url.hostname.toLowerCase().replace(/^www\./, "");
@@ -1592,13 +1593,28 @@ function youtubeIdFromUrl(value) {
       if (url.pathname === "/watch") id = url.searchParams.get("v") || "";
       else if (/^\/(embed|shorts|live)\//.test(url.pathname)) id = url.pathname.split("/")[2] || "";
     }
-    return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : null;
+    if (/^[A-Za-z0-9_-]{11}$/.test(id)) return { provider: "youtube", id };
+    if (["vimeo.com", "player.vimeo.com"].includes(host)) {
+      const vimeoId = url.pathname.split("/").filter(Boolean).find((part) => /^\d{5,12}$/.test(part));
+      if (vimeoId) return { provider: "vimeo", id: vimeoId };
+    }
+    if (["nicovideo.jp", "sp.nicovideo.jp", "nico.ms"].includes(host)) {
+      const nicoId = url.pathname.split("/").filter(Boolean).find((part) => /^(sm|so|nm)\d{1,12}$/.test(part));
+      if (nicoId) return { provider: "niconico", id: nicoId };
+    }
+    return null;
   } catch { return null; }
 }
-function youtubeHTML(id) {
-  return /^[A-Za-z0-9_-]{11}$/.test(id || "")
-    ? `<div class="youtube-embed"><iframe src="https://www.youtube-nocookie.com/embed/${id}" title="${marketText("YouTube動画", "YouTube video")}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`
-    : "";
+function videoHTML(video) {
+  if (typeof video === "string" && /^[A-Za-z0-9_-]{11}$/.test(video)) video = { provider: "youtube", id: video };
+  if (!video?.id) return "";
+  const configs = {
+    youtube: { test: /^[A-Za-z0-9_-]{11}$/, src: `https://www.youtube-nocookie.com/embed/${video.id}`, title: "YouTube" },
+    vimeo: { test: /^\d{5,12}$/, src: `https://player.vimeo.com/video/${video.id}`, title: "Vimeo" },
+    niconico: { test: /^(sm|so|nm)\d{1,12}$/, src: `https://embed.nicovideo.jp/watch/${video.id}`, title: marketText("ニコニコ動画", "Niconico") },
+  };
+  const config = configs[video.provider];
+  return config?.test.test(video.id) ? `<div class="youtube-embed video-embed ${video.provider}"><iframe src="${config.src}" title="${config.title}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>` : "";
 }
 function formatFileSize(bytes) {
   return bytes >= 1024 * 1024
@@ -1619,7 +1635,7 @@ function postHTML(p, detail = false) {
   const quoteImages =
     p.quoteOf?.images || (p.quoteOf?.image ? [p.quoteOf.image] : []);
   const question=p.qa?`<div class="post-question"><small>${marketText('質問箱への質問','Question box')}</small><p>${escape(p.qa.text)}</p><span>${p.qa.anonymous?marketText('匿名','Anonymous'):escape(p.qa.fromName || '')}</span></div>`:'';
-  return `<article class="post ${detail ? "post-detail" : ""}" id="post-${p.id}"${detail ? "" : ` data-open-post="${p.id}"`}><button data-person="${u.id}" aria-label="${u.name}のプロフィール" style="padding:0;align-self:flex-start">${avatar(u)}</button><div class="post-body"><div class="post-head"><button data-person="${u.id}" style="padding:0"><b>${u.name}</b></button>${u.id === "sota" ? '<span class="verified" aria-label="サンプル認証済み">✦</span>' : ""}${u.mbti ? `<span class="mbti-badge compact">${escape(u.mbti)}</span>` : ""}<span class="handle">@${u.handle}</span><button type="button" class="time post-detail-link" data-open-post="${p.id}" aria-label="${marketText("投稿詳細を表示", "View post details")}">· ${p.time}</button>${p.u === "you" ? `<button class="delete" data-action="delete" data-id="${p.id}">削除</button>` : ""}</div>${p.text ? `<p class="post-content">${escape(p.text).replace(/(#[^\s#]+)/g, '<span class="tag">$1</span>')}</p>` : ""}${question}${imageGridHTML(images)}${documentsHTML(p.documents)}${audioHTML(p.audio)}${youtubeHTML(p.youtubeId)}${stockPostCardHTML(p.stock)}${p.quoteOf ? `<div class="quote-card"><small>引用元 · ${users.find((u) => u.id === p.quoteOf.u)?.name || ""}</small>${p.quoteOf.text ? `<p>${escape(p.quoteOf.text)}</p>` : ""}${imageGridHTML(quoteImages, true)}${documentsHTML(p.quoteOf.documents)}${audioHTML(p.quoteOf.audio)}${youtubeHTML(p.quoteOf.youtubeId)}</div>` : ""}${pollHTML(p)}<div class="actions">${[
+  return `<article class="post ${detail ? "post-detail" : ""}" id="post-${p.id}"${detail ? "" : ` data-open-post="${p.id}"`}><button data-person="${u.id}" aria-label="${u.name}のプロフィール" style="padding:0;align-self:flex-start">${avatar(u)}</button><div class="post-body"><div class="post-head"><button data-person="${u.id}" style="padding:0"><b>${u.name}</b></button>${u.id === "sota" ? '<span class="verified" aria-label="サンプル認証済み">✦</span>' : ""}${u.mbti ? `<span class="mbti-badge compact">${escape(u.mbti)}</span>` : ""}<span class="handle">@${u.handle}</span><button type="button" class="time post-detail-link" data-open-post="${p.id}" aria-label="${marketText("投稿詳細を表示", "View post details")}">· ${p.time}</button>${p.u === "you" ? `<button class="delete" data-action="delete" data-id="${p.id}">削除</button>` : ""}</div>${p.text ? `<p class="post-content">${escape(p.text).replace(/(#[^\s#]+)/g, '<span class="tag">$1</span>')}</p>` : ""}${question}${imageGridHTML(images)}${documentsHTML(p.documents)}${audioHTML(p.audio)}${videoHTML(p.video || p.youtubeId)}${stockPostCardHTML(p.stock)}${p.quoteOf ? `<div class="quote-card"><small>引用元 · ${users.find((u) => u.id === p.quoteOf.u)?.name || ""}</small>${p.quoteOf.text ? `<p>${escape(p.quoteOf.text)}</p>` : ""}${imageGridHTML(quoteImages, true)}${documentsHTML(p.quoteOf.documents)}${audioHTML(p.quoteOf.audio)}${videoHTML(p.quoteOf.video || p.quoteOf.youtubeId)}</div>` : ""}${pollHTML(p)}<div class="actions">${[
     ["reply", tr("reply"), p.replies, ""],
     ["repeat", tr("repost"), p.reposts, p.reposted ? "reposted" : ""],
     ["heart", tr("like"), p.likes, p.liked ? "liked" : ""],
@@ -1645,15 +1661,15 @@ function createPost(
   poll = null,
   audio = null,
   stock = null,
-  youtubeId = null,
+  video = null,
   documents = [],
 ) {
   if (
     typeof text !== "string" ||
-    (!text.trim() && !images.length && !poll && !audio && !stock && !youtubeId && !documents.length) ||
+    (!text.trim() && !images.length && !poll && !audio && !stock && !video && !documents.length) ||
     [...text].length > 200
   )
-    throw Error("本文、画像、文書、投票、音声、シェア、YouTube動画のいずれかを追加してください。");
+    throw Error("本文、画像、文書、投票、音声、シェア、動画のいずれかを追加してください。");
   const p = {
     id: Date.now(),
     u: "you",
@@ -1668,7 +1684,7 @@ function createPost(
     parent,
     quoteOf,
     stock,
-    youtubeId,
+    video,
     documents: documents.slice(0, 4),
   };
   if (parent) {
@@ -1810,7 +1826,7 @@ function clearDocuments() {
 function updateYoutubePreview() {
   $("#youtube-preview").hidden = !composingYoutube;
   $("#youtube-preview").innerHTML = composingYoutube
-    ? `${youtubeHTML(composingYoutube)}<button type="button" data-remove-youtube aria-label="${marketText("YouTube動画を削除", "Remove YouTube video")}">×</button>`
+    ? `${videoHTML(composingYoutube)}<button type="button" data-remove-youtube aria-label="${marketText("動画を削除", "Remove video")}">×</button>`
     : "";
 }
 function clearYoutube() {
@@ -1927,12 +1943,12 @@ $("#add-youtube").onclick = () => {
 $("#close-youtube-dialog").onclick = () => $("#youtube-dialog").close();
 $("#youtube-form").onsubmit = (e) => {
   e.preventDefault();
-  const id = youtubeIdFromUrl($("#youtube-url").value);
-  if (!id) {
-    $("#youtube-error").textContent = marketText("有効なYouTube URLを入力してください。", "Enter a valid YouTube URL.");
+  const video = videoFromUrl($("#youtube-url").value);
+  if (!video) {
+    $("#youtube-error").textContent = marketText("対応している動画URLを入力してください。", "Enter a supported video URL.");
     return;
   }
-  composingYoutube = id;
+  composingYoutube = video;
   updateYoutubePreview();
   updatePostButton();
   $("#youtube-dialog").close();
@@ -1950,6 +1966,7 @@ $("#quote-picker-list").onclick = (event) => {
     images: original.images || [],
     audio: original.audio || null,
     documents: original.documents || [],
+    video: original.video || (original.youtubeId ? { provider: "youtube", id: original.youtubeId } : null),
   };
   $("#quote-picker-dialog").close();
   updateQuoteComposer();
@@ -2321,7 +2338,7 @@ $("#post-form").onsubmit = async (e) => {
         images: composingQuote.images || [],
         audio: composingQuote.audio || null,
         documents: composingQuote.documents || [],
-        youtubeId: composingQuote.youtubeId || null,
+        video: composingQuote.video || null,
       }
     : null;
   const poll = $("#poll-builder").hidden

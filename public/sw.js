@@ -1,4 +1,4 @@
-const CACHE = "yytblue-v14";
+const CACHE = "yytblue-v15";
 const APP_SHELL = [
   "/",
   "/blue.html",

@@ -160,10 +160,10 @@
                 type="button"
                 class="poll-toggle youtube-toggle"
                 id="add-youtube"
-                title="YouTube動画を追加"
-                aria-label="YouTube動画を追加"
+                title="動画URLを追加"
+                aria-label="動画URLを追加"
               >
-                <span aria-hidden="true">▶</span><span>YouTube</span></button
+                <span aria-hidden="true">▶</span><span>動画</span></button
               ><button
                 type="button"
                 class="poll-toggle"
@@ -345,12 +345,12 @@
     <dialog id="youtube-dialog" class="youtube-dialog">
       <form id="youtube-form">
         <div class="dialog-head">
-          <h2 id="youtube-dialog-title">YouTube動画を追加</h2>
+          <h2 id="youtube-dialog-title">動画を埋め込む</h2>
           <button type="button" id="close-youtube-dialog" aria-label="閉じる">×</button>
         </div>
-        <p id="youtube-dialog-help">YouTube動画のURLを入力してください。</p>
-        <label for="youtube-url" class="sr">YouTube URL</label>
-        <input id="youtube-url" name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://www.youtube.com/watch?v=..." required>
+        <p id="youtube-dialog-help">YouTube、ニコニコ動画、VimeoのURLを入力してください。</p>
+        <label for="youtube-url" class="sr">動画URL</label>
+        <input id="youtube-url" name="url" type="url" inputmode="url" autocomplete="url" placeholder="https://..." required>
         <p id="youtube-error" class="youtube-error" role="alert"></p>
         <button class="primary" id="youtube-add-button">追加する</button>
       </form>
