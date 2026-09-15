@@ -363,6 +363,7 @@
         <label class="story-image-picker"><span aria-hidden="true">▧</span><span id="story-image-label">画像を選択</span><input id="story-image" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label>
         <div id="story-image-preview" class="story-image-preview" hidden></div>
         <label><span id="story-text-label">メッセージ</span><textarea id="story-text" name="text" maxlength="120" rows="3" placeholder="ストーリーにひとこと"></textarea></label>
+        <fieldset class="story-audience"><legend id="story-audience-label">公開範囲</legend><label><input type="radio" name="audience" value="public" checked><span aria-hidden="true">◎</span><b id="story-audience-public">全世界</b></label><label><input type="radio" name="audience" value="followers"><span aria-hidden="true">◉</span><b id="story-audience-followers">フォロワー</b></label><label><input type="radio" name="audience" value="close"><span aria-hidden="true">★</span><b id="story-audience-close">親しい友達</b></label></fieldset>
         <button class="primary" id="story-publish-button">公開する</button>
       </form>
     </dialog>

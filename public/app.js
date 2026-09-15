@@ -498,9 +498,9 @@ let questions = [
   { id: 1, to: "you", from: "nagi", anonymous: true, text: "最近いちばん楽しかったことは何ですか？", time: "サンプル", answer: null },
 ];
 let stories = [
-  { id: 1, u: "nagi", text: "朝の散歩で見つけた景色", createdAt: Date.now() - 32 * 60 * 1000 },
-  { id: 2, u: "sota", text: "今日も少しずつ、つくっています。", createdAt: Date.now() - 95 * 60 * 1000 },
-  { id: 3, u: "mio", text: "いま聴いているプレイリスト 🎧", createdAt: Date.now() - 3 * 60 * 60 * 1000 },
+  { id: 1, u: "nagi", text: "朝の散歩で見つけた景色", audience: "public", createdAt: Date.now() - 32 * 60 * 1000 },
+  { id: 2, u: "sota", text: "今日も少しずつ、つくっています。", audience: "followers", createdAt: Date.now() - 95 * 60 * 1000 },
+  { id: 3, u: "mio", text: "いま聴いているプレイリスト 🎧", audience: "close", createdAt: Date.now() - 3 * 60 * 60 * 1000 },
 ];
 let relationships = [];
 let lists = [];
@@ -920,6 +920,10 @@ function applyLanguage() {
   $("#story-text-label").textContent = marketText("メッセージ", "Message");
   $("#story-text").placeholder = marketText("ストーリーにひとこと", "Add a message to your story");
   $("#story-publish-button").textContent = marketText("公開する", "Publish");
+  $("#story-audience-label").textContent = marketText("公開範囲", "Audience");
+  $("#story-audience-public").textContent = marketText("全世界", "Everyone");
+  $("#story-audience-followers").textContent = marketText("フォロワー", "Followers");
+  $("#story-audience-close").textContent = marketText("親しい友達", "Close friends");
   $("#remove-poll").setAttribute("aria-label", tr("removePoll"));
   document
     .querySelectorAll("[data-poll-option]")
@@ -1142,6 +1146,7 @@ function searchSafetyHTML(value) {
 let creatorMarket = CreatorMarket.initial();
 const koPhrases = {
   "ストーリーを作成": "스토리 만들기", "24時間表示されます。画像またはメッセージを追加してください。": "24시간 동안 표시됩니다. 이미지 또는 메시지를 추가하세요.", "画像を選択": "이미지 선택", "メッセージ": "메시지", "ストーリーにひとこと": "스토리에 메시지 추가", "公開する": "공개", "追加": "추가", "あなた": "나", "削除": "삭제", "ストーリーを削除しました": "스토리를 삭제했습니다", "ストーリーを公開しました": "스토리를 공개했습니다", "ストーリーを公開できませんでした": "스토리를 공개하지 못했습니다", "画像またはメッセージを追加してください": "이미지 또는 메시지를 추가하세요", "画像は8MB以下にしてください": "이미지는 8MB 이하여야 합니다",
+  "公開範囲": "공개 범위", "全世界": "모두", "フォロワー": "팔로워", "親しい友達": "친한 친구", "◎ 全世界": "◎ 모두", "◉ フォロワー": "◉ 팔로워", "★ 親しい友達": "★ 친한 친구",
   "動画・SNS投稿のURLを追加": "동영상·SNS 게시물 URL 추가", "埋め込み": "임베드", "URLを埋め込む": "URL 임베드", "追加する": "추가", "文書": "문서", "文書を作成": "문서 만들기", "タイトル": "제목", "本文": "본문", "ファイル形式": "파일 형식", "作成して添付": "만들어서 첨부", "ショートカット": "단축키", "キーボードショートカット": "키보드 단축키", "初期設定に戻す": "기본값 복원", "メニューを閉じる": "메뉴 닫기", "閉じる": "닫기",
   "ログイン方法": "로그인 방법", "未ログイン": "로그인하지 않음", "ログアウト": "로그아웃", "GitHubでログイン": "GitHub로 로그인", "ChatGPTでログイン": "ChatGPT로 로그인", "アプリをインストール": "앱 설치", "この端末にインストール済みです": "이 기기에 설치됨", "ホーム画面への追加方法": "홈 화면에 추가하는 방법",
   "投稿詳細": "게시물 상세", "投稿": "게시물", "返信": "답글", "まだ返信はありません。": "아직 답글이 없습니다.", "質問箱": "질문함", "質問を送りました": "질문을 보냈습니다", "関係を追加": "관계 추가", "交友関係に追加しました": "관계를 추가했습니다", "リストを作成しました": "리스트를 만들었습니다", "リストを削除しました": "리스트를 삭제했습니다",
@@ -1610,6 +1615,9 @@ function storyAge(createdAt) {
   if (minutes < 60) return marketText(`${minutes}分前`, `${minutes}m ago`);
   return marketText(`${Math.floor(minutes / 60)}時間前`, `${Math.floor(minutes / 60)}h ago`);
 }
+function storyAudienceLabel(audience) {
+  return audience === "close" ? marketText("★ 親しい友達", "★ Close friends") : audience === "followers" ? marketText("◉ フォロワー", "◉ Followers") : marketText("◎ 全世界", "◎ Everyone");
+}
 function renderStories() {
   const active = stories.filter((story) => story.createdAt > Date.now() - 86400000);
   $("#stories").innerHTML = `<button type="button" class="story-add" data-add-story><span class="story-ring"><span class="avatar me">Y</span><b>＋</b></span><small>${marketText("追加", "Add")}</small></button>${active.map((story) => {
@@ -1619,7 +1627,7 @@ function renderStories() {
 }
 function openStory(story) {
   const user = users.find((item) => item.id === story.u) || users.find((item) => item.id === "you");
-  $("#story-viewer-content").innerHTML = `${story.image ? `<img src="${escape(story.image)}" alt="${escape(user.name)}のストーリー">` : `<div class="story-text-only">${escape(story.text || "✳")}</div>`}<div class="story-viewer-caption"><span>${avatar(user)}<b>${escape(user.name)}</b><small>${storyAge(story.createdAt)}</small></span>${story.image && story.text ? `<p>${escape(story.text)}</p>` : ""}${story.u === "you" ? `<button type="button" data-delete-story="${story.id}">${marketText("削除", "Delete")}</button>` : ""}</div>`;
+  $("#story-viewer-content").innerHTML = `${story.image ? `<img src="${escape(story.image)}" alt="${escape(user.name)}のストーリー">` : `<div class="story-text-only">${escape(story.text || "✳")}</div>`}<div class="story-viewer-caption"><span>${avatar(user)}<b>${escape(user.name)}</b><small>${storyAge(story.createdAt)}</small></span><small class="story-visibility">${storyAudienceLabel(story.audience || "public")}</small>${story.image && story.text ? `<p>${escape(story.text)}</p>` : ""}${story.u === "you" ? `<button type="button" data-delete-story="${story.id}">${marketText("削除", "Delete")}</button>` : ""}</div>`;
   $("#story-viewer").showModal();
 }
 function pollHTML(p) {
@@ -2884,6 +2892,7 @@ $("#story-create-form").onsubmit = async (e) => {
   e.preventDefault();
   const text = $("#story-text").value.trim();
   const file = $("#story-image").files?.[0];
+  const audience = new FormData(e.currentTarget).get("audience") || "public";
   if (!text && !file) return notify(marketText("画像またはメッセージを追加してください", "Add an image or message"));
   e.submitter.disabled = true;
   try {
@@ -2894,7 +2903,7 @@ $("#story-create-form").onsubmit = async (e) => {
       if (!response.ok) throw Error("upload");
       image = (await response.json()).urls?.[0] || null;
     }
-    stories.unshift({ id: Date.now(), u: "you", text, image, createdAt: Date.now() });
+    stories.unshift({ id: Date.now(), u: "you", text, image, audience, createdAt: Date.now() });
     $("#story-create-dialog").close(); persistState(); render(); notify(marketText("ストーリーを公開しました", "Story published"));
   } catch { notify(marketText("ストーリーを公開できませんでした", "Could not publish story")); }
   finally { e.submitter.disabled = false; }
