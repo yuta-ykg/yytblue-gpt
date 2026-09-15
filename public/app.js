@@ -214,9 +214,21 @@ const copy = {
     save: "Save",
   },
 };
+copy.ko = {
+  ...copy.en,
+  home: "홈", search: "탐색", bookmark: "북마크", lists: "리스트", questions: "질문함", games: "게임룸", diagnosis: "셀프 체크", relationships: "관계", help: "도움말", user: "프로필", settings: "설정",
+  trendsNav: "트렌드", trendTitle: "나를 위한 트렌드", trendHelp: "지금 화제가 되는 키워드를 찾아보세요.", recommended: "추천", following: "팔로잉", compose: "게시하기", placeholder: "무슨 일이 일어나고 있나요?", latest: "최신 게시물", searchPlaceholder: "게시물, 사용자, 해시태그 검색",
+  settingsTitle: "표시 언어", appearanceTitle: "테마", appearanceHelp: "이 기기에서 사용할 화면 테마를 선택하세요.", light: "라이트", dark: "다크", darkBlue: "다크 블루", lightOrange: "라이트 오렌지", mint: "민트", monochrome: "모노크롬", system: "시스템",
+  themeSaved: "선택한 테마가 이 기기에 저장됩니다.", likeIconTitle: "좋아요 아이콘", likeIconHelp: "좋아요에 사용할 아이콘을 선택하세요.", heartIcon: "기본", starIcon: "즐겨찾기", thumbIcon: "추천", upvoteIcon: "찬성", iconSaved: "선택한 아이콘이 이 기기에 저장됩니다.", settingsHelp: "Blue에서 사용할 언어를 선택하세요.",
+  accountPrivacyTitle: "계정 공개 범위", privateAccount: "비공개 계정", privateAccountHelp: "켜면 승인한 팔로워만 게시물을 볼 수 있습니다.", privateAccountOn: "비공개", privateAccountOff: "공개", privacySaved: "계정을 비공개로 설정했습니다", privacyRemoved: "계정을 공개로 설정했습니다", lockedAccount: "비공개 계정",
+  editProfile: "프로필 편집", editProfileHelp: "표시 이름, 사용자 이름, 소개, MBTI를 변경할 수 있습니다.", displayName: "표시 이름", username: "사용자 이름", bioLabel: "소개", mbtiLabel: "MBTI", mbtiUnset: "설정 안 함", cancel: "취소", saveChanges: "저장", profileSaved: "프로필을 업데이트했습니다", profileError: "표시 이름은 10자 이하, 사용자 이름은 영문·숫자·_로 25자 이하로 입력하세요.", handleTaken: "이미 사용 중인 핸들입니다. 다른 핸들을 입력하세요.",
+  japanese: "일본어", english: "영어", korean: "한국어", saved: "선택한 언어가 이 기기에 저장됩니다.", demo: "게시물, 스토리, 이미지, 투표, 질문이 저장됩니다. 스토리는 24시간 후 사라집니다.",
+  trends: "지금 화제", people: "추천 사용자", welcome: "좋아하는 것에서,<br>이어지세요.", welcomeText: "평범한 한마디가,<br>새로운 만남의 시작이 됩니다.", quoteButton: "인용 리포스트", quoteFrom: "인용", post: "게시물", find: "검색", empty: "아직 게시물이 없습니다. 첫 글을 작성해 보세요.", emptySaved: "저장한 게시물이 여기에 표시됩니다.", emptySearch: "일치하는 게시물이 없습니다. 다른 검색어를 사용해 보세요.", accounts: "계정", suggestedAccounts: "추천 계정", noAccounts: "일치하는 계정이 없습니다.", youLabel: "나", world: "세상을 조금 더 넓게.", savedLead: "나중에 다시 읽고 싶은 것.", discover: "관심 있는 주제를 찾아보세요", results: " 검색 결과", follow: "팔로우", followingBtn: "팔로잉", reply: "답글", repost: "리포스트", like: "좋아요", save: "저장",
+};
 let lang = (() => {
   try {
-    return localStorage.getItem("blue-language") === "en" ? "en" : "ja";
+    const saved = localStorage.getItem("blue-language");
+    return ["ja", "en", "ko"].includes(saved) ? saved : "ja";
   } catch {
     return "ja";
   }
@@ -361,6 +373,9 @@ Object.assign(copy.en, {
   option2: "Option 2",
   votes: "votes",
   pollError: "Enter both poll options.",
+});
+Object.assign(copy.ko, {
+  addImage: "첨부", removeImage: "이미지 삭제", imagePreview: "선택한 이미지 미리보기", imageError: "JPEG, PNG, WebP 또는 GIF 이미지를 선택하세요.", imageTooLarge: "이미지는 5MB 이하여야 합니다.", documentError: "PDF, Word, Excel, PowerPoint 또는 지원되는 문서를 선택하세요.", documentTooLarge: "문서는 파일당 10MB 이하, 최대 4개까지 첨부할 수 있습니다.", removeDocument: "문서 삭제", addAudio: "오디오", recordAudio: "녹음", removeAudio: "오디오 삭제", audioError: "MP3, M4A, WAV, OGG 또는 WebM 파일을 선택하세요.", audioTooLarge: "오디오는 15MB 이하여야 합니다.", audioUnavailable: "이 브라우저에서는 녹음을 사용할 수 없습니다.", recordingReady: "녹음 준비 완료", recordingNow: "녹음 중…", recordingDone: "녹음을 확인한 뒤 완료를 누르세요", recordingPaused: "녹음이 일시 정지되었습니다. 다시 시작하거나 완료할 수 있습니다.", startRecording: "녹음", resumeRecording: "다시 시작", discardRecording: "삭제", finishRecording: "완료", stopRecording: "일시 정지", chooseQuote: "인용 리포스트", chooseQuoteTitle: "인용할 게시물 선택", poll: "투표", addPoll: "투표 추가", removePoll: "투표 삭제", option1: "선택지 1", option2: "선택지 2", votes: "표", pollError: "두 개의 선택지를 입력하세요.",
 });
 const tr = (k) => copy[lang][k] || k;
 const icon = (n) =>
@@ -1125,7 +1140,13 @@ function searchSafetyHTML(value) {
   return "";
 }
 let creatorMarket = CreatorMarket.initial();
-const marketText = (ja, en) => (lang === "ja" ? ja : en);
+const koPhrases = {
+  "ストーリーを作成": "스토리 만들기", "24時間表示されます。画像またはメッセージを追加してください。": "24시간 동안 표시됩니다. 이미지 또는 메시지를 추가하세요.", "画像を選択": "이미지 선택", "メッセージ": "메시지", "ストーリーにひとこと": "스토리에 메시지 추가", "公開する": "공개", "追加": "추가", "あなた": "나", "削除": "삭제", "ストーリーを削除しました": "스토리를 삭제했습니다", "ストーリーを公開しました": "스토리를 공개했습니다", "ストーリーを公開できませんでした": "스토리를 공개하지 못했습니다", "画像またはメッセージを追加してください": "이미지 또는 메시지를 추가하세요", "画像は8MB以下にしてください": "이미지는 8MB 이하여야 합니다",
+  "動画・SNS投稿のURLを追加": "동영상·SNS 게시물 URL 추가", "埋め込み": "임베드", "URLを埋め込む": "URL 임베드", "追加する": "추가", "文書": "문서", "文書を作成": "문서 만들기", "タイトル": "제목", "本文": "본문", "ファイル形式": "파일 형식", "作成して添付": "만들어서 첨부", "ショートカット": "단축키", "キーボードショートカット": "키보드 단축키", "初期設定に戻す": "기본값 복원", "メニューを閉じる": "메뉴 닫기", "閉じる": "닫기",
+  "ログイン方法": "로그인 방법", "未ログイン": "로그인하지 않음", "ログアウト": "로그아웃", "GitHubでログイン": "GitHub로 로그인", "ChatGPTでログイン": "ChatGPT로 로그인", "アプリをインストール": "앱 설치", "この端末にインストール済みです": "이 기기에 설치됨", "ホーム画面への追加方法": "홈 화면에 추가하는 방법",
+  "投稿詳細": "게시물 상세", "投稿": "게시물", "返信": "답글", "まだ返信はありません。": "아직 답글이 없습니다.", "質問箱": "질문함", "質問を送りました": "질문을 보냈습니다", "関係を追加": "관계 추가", "交友関係に追加しました": "관계를 추가했습니다", "リストを作成しました": "리스트를 만들었습니다", "リストを削除しました": "리스트를 삭제했습니다",
+};
+const marketText = (ja, en, ko) => lang === "ja" ? ja : lang === "ko" ? (ko || koPhrases[ja] || en) : en;
 function shareholderLeadersHTML(id, supply, fmt) {
   const leaders = shareholderLeaders[id] || [];
   const rows = leaders
@@ -1521,6 +1542,7 @@ function render() {
             )}</div><p class="language-note">${tr("iconSaved")}</p></section>`
         : "";
   if (settings) {
+    document.querySelector(".language-options")?.insertAdjacentHTML("beforeend", `<button data-language="ko" class="language-choice ${lang === "ko" ? "selected" : ""}" aria-pressed="${lang === "ko"}"><span>한</span><b>${tr("korean")}</b><small>한국어</small></button>`);
     $("#search-area").insertAdjacentHTML("beforeend", githubAccountHTML());
     $("#search-area").insertAdjacentHTML("beforeend", pwaGuideHTML());
     $("#search-area").insertAdjacentHTML("beforeend", teenSettingsHTML());
@@ -2714,7 +2736,7 @@ document.addEventListener("click", async (e) => {
       localStorage.setItem("blue-language", lang);
     } catch {}
     render();
-    notify(lang === "ja" ? "日本語に変更しました" : "Changed to English");
+    notify(lang === "ja" ? "日本語に変更しました" : lang === "ko" ? "한국어로 변경했습니다" : "Changed to English");
   }
   if (b.dataset.themeChoice) {
     theme = b.dataset.themeChoice;
