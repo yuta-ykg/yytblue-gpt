@@ -515,6 +515,7 @@ let view = "home",
   profileUser = "you",
   following = new Set(["nagi"]),
   selectedPostId = null,
+  activeStoryId = null,
   postReturnView = "home",
   replyTo = null,
   repostTo = null,
@@ -1626,9 +1627,24 @@ function renderStories() {
   }).join("")}`;
 }
 function openStory(story) {
+  activeStoryId = story.id;
+  const sequence = stories.filter((item) => item.createdAt > Date.now() - 86400000);
+  const index = sequence.findIndex((item) => item.id === story.id);
   const user = users.find((item) => item.id === story.u) || users.find((item) => item.id === "you");
   $("#story-viewer-content").innerHTML = `${story.image ? `<img src="${escape(story.image)}" alt="${escape(user.name)}のストーリー">` : `<div class="story-text-only">${escape(story.text || "✳")}</div>`}<div class="story-viewer-caption"><span>${avatar(user)}<b>${escape(user.name)}</b><small>${storyAge(story.createdAt)}</small></span><small class="story-visibility">${storyAudienceLabel(story.audience || "public")}</small>${story.image && story.text ? `<p>${escape(story.text)}</p>` : ""}${story.u === "you" ? `<button type="button" data-delete-story="${story.id}">${marketText("削除", "Delete")}</button>` : ""}</div>`;
-  $("#story-viewer").showModal();
+  $("#story-viewer .story-viewer-progress span").style.width = `${((index + 1) / sequence.length) * 100}%`;
+  $("#story-prev").disabled = index <= 0;
+  $("#story-next").disabled = index < 0;
+  $("#story-prev").setAttribute("aria-label", marketText("前のストーリー", "Previous story", "이전 스토리"));
+  $("#story-next").setAttribute("aria-label", marketText("次のストーリー", "Next story", "다음 스토리"));
+  if (!$("#story-viewer").open) $("#story-viewer").showModal();
+}
+function moveStory(direction) {
+  const sequence = stories.filter((item) => item.createdAt > Date.now() - 86400000);
+  const index = sequence.findIndex((item) => item.id === activeStoryId);
+  const next = sequence[index + direction];
+  if (next) return openStory(next);
+  if (direction > 0) $("#story-viewer").close();
 }
 function pollHTML(p) {
   if (!p.poll) return "";
@@ -2562,6 +2578,11 @@ $("#app-drawer").addEventListener("click", (e) => {
 });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && !$("#drawer-overlay").hidden) setDrawer(false);
+  if ($("#story-viewer").open && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+    e.preventDefault();
+    moveStory(e.key === "ArrowLeft" ? -1 : 1);
+    return;
+  }
   if (capturingShortcut) {
     e.preventDefault();
     if (e.key === "Escape") { capturingShortcut = null; renderShortcutSettings(); return; }
@@ -2879,6 +2900,15 @@ document.addEventListener("click", async (e) => {
 });
 $("#close-story-create").onclick = () => $("#story-create-dialog").close();
 $("#close-story-viewer").onclick = () => $("#story-viewer").close();
+$("#story-prev").onclick = () => moveStory(-1);
+$("#story-next").onclick = () => moveStory(1);
+let storyTouchStartX = 0;
+$("#story-viewer").addEventListener("touchstart", (e) => { storyTouchStartX = e.changedTouches[0]?.clientX || 0; }, { passive: true });
+$("#story-viewer").addEventListener("touchend", (e) => {
+  const distance = (e.changedTouches[0]?.clientX || 0) - storyTouchStartX;
+  if (Math.abs(distance) > 55) moveStory(distance > 0 ? -1 : 1);
+}, { passive: true });
+$("#story-viewer").addEventListener("close", () => { activeStoryId = null; });
 $("#story-image").onchange = (e) => {
   const file = e.target.files?.[0];
   const preview = $("#story-image-preview");
