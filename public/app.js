@@ -268,7 +268,7 @@ let likeIcon = (() => {
     return "heart";
   }
 })();
-const defaultRightWidgets = ["search", "welcome", "trends", "people", "shortcuts", "bookmarks", "questions", "games", "documents"];
+const defaultRightWidgets = ["search", "welcome", "trends", "people", "shortcuts", "bookmarks", "questions", "games", "documents", "google"];
 const initiallyVisibleRightWidgets = new Set(["search", "welcome", "trends", "people"]);
 let rightWidgets = (() => {
   try {
@@ -289,6 +289,7 @@ function rightWidgetLabel(id) {
     shortcuts: ["ショートカット", "Shortcuts", "바로가기"], bookmarks: ["保存した投稿", "Saved posts", "저장한 게시물"],
     questions: ["質問箱", "Questions", "질문함"], games: ["ゲームルーム", "Game rooms", "게임룸"],
     documents: ["文書ファイル作成", "Create document", "문서 파일 만들기"],
+    google: ["Googleサービス", "Google services", "Google 서비스"],
   };
   return labels[id]?.[lang === "ja" ? 0 : lang === "ko" ? 2 : 1] || id;
 }
@@ -578,6 +579,7 @@ let view = "home",
   composingImages = [],
   composingAudio = null,
   composingDocuments = [],
+  composingGoogleFiles = [],
   editingImageIndex = -1,
   imageEditorSource = null,
   imageEditorTransform = null,
@@ -608,6 +610,123 @@ function notify(t) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => ($("#toast").style.display = "none"), 2600);
 }
+function googleServiceIcon(kind) {
+  const paths = {
+    gmail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/>',
+    drive: '<path d="m9 3 6 0 7 12-3 6H5l-3-6Z M9 3l10 18 M15 3 5 21 M2 15h20"/>',
+    folder: '<path d="M3 7a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v9H3Z"/>',
+    docs: '<path d="M5 3h9l5 5v13H5Z M14 3v6h5 M8 13h8 M8 17h6"/>',
+    sheets: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16 M4 15h16 M10 9v12"/>',
+    slides: '<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 22l4-4 4 4 M7 8h10v6H7Z"/>',
+  };
+  return `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[kind] || paths.drive}</svg>`;
+}
+function googleLauncherHTML() {
+  const index = GoogleServices.languageIndex(lang);
+  return GoogleServices.services.map((service) => `<a href="${service.url}" target="_blank" rel="noopener noreferrer" aria-label="Google ${service.name} · ${marketText("新しいタブで開く", "Open in a new tab", "새 탭에서 열기")}"><span class="google-service-icon">${googleServiceIcon(service.id)}</span><span><b>${service.name}</b><small>${service.labels[index]}</small></span><span class="google-external" aria-hidden="true">↗</span></a>`).join("");
+}
+function googleFilesHTML(files, removable = false) {
+  const normalized = GoogleServices.normalizeFiles(files);
+  if (!normalized.length) return "";
+  return `<div class="google-file-cards">${normalized.map((file, index) => {
+    const label = file.title || GoogleServices.fileLabel(file.kind, lang);
+    return `<div class="google-file-card"><a href="${escape(file.url)}" target="_blank" rel="noopener noreferrer" aria-label="${escape(label)} · ${marketText("新しいタブで開く", "Open in a new tab", "새 탭에서 열기")}"><span class="google-service-icon">${googleServiceIcon(file.kind)}</span><span><b>${escape(label)}</b><small>${GoogleServices.fileLabel(file.kind, lang)} · ${marketText("リンク", "Link", "링크")}</small></span><span aria-hidden="true">↗</span></a>${removable ? `<button type="button" data-remove-google="${index}" aria-label="${marketText("リンクを削除", "Remove link", "링크 삭제")}: ${escape(label)}">×</button>` : ""}</div>`;
+  }).join("")}</div>`;
+}
+function renderGooglePreview() {
+  $("#google-file-preview").hidden = !composingGoogleFiles.length;
+  $("#google-file-preview").innerHTML = googleFilesHTML(composingGoogleFiles, true);
+}
+function googleSettingsHTML() {
+  return `<section class="settings-panel google-settings"><h2>${rightWidgetLabel("google")}</h2><p>${marketText("Gmail共有と、Googleファイルのリンク添付を使えます。アカウントの接続・自動同期は行いません。", "Share with Gmail and attach Google file links. This does not connect or sync your Google account.", "Gmail 공유와 Google 파일 링크 첨부를 사용할 수 있습니다. Google 계정 연결이나 자동 동기화는 하지 않습니다.")}</p><button type="button" class="primary" data-google-open>${marketText("Googleサービスを開く", "Open Google services", "Google 서비스 열기")}</button></section>`;
+}
+function renderGoogleUI() {
+  const labels = {
+    "google-dialog-title": rightWidgetLabel("google"),
+    "google-dialog-help": marketText("Googleサービスを開いたり、ファイルのリンクを投稿に添付できます。", "Open Google services or attach a file link to a post.", "Google 서비스를 열거나 게시물에 파일 링크를 첨부할 수 있습니다."),
+    "google-link-heading": marketText("Googleのファイルを投稿に添付", "Attach a Google file link", "Google 파일 링크 첨부"),
+    "google-url-label": marketText("共有リンク", "Sharing link", "공유 링크"),
+    "google-title-label": marketText("表示名（任意）", "Display name (optional)", "표시 이름 (선택)"),
+    "google-link-note": marketText("Drive・Docs・Sheets・Slidesの共有URLに対応。最大4件。リンク先の閲覧権限はGoogle側の設定のままです。", "Supports Drive, Docs, Sheets, and Slides links. Up to 4 per post. Google sharing permissions remain unchanged.", "Drive, Docs, Sheets, Slides 공유 URL을 최대 4개 첨부할 수 있습니다. Google 공유 권한은 변경되지 않습니다."),
+    "google-link-add": marketText("リンクを添付", "Attach link", "링크 첨부"),
+    "google-connection-note": marketText("リンク連携のみ。Googleアカウントの接続や、メール・ファイルの自動読み込み／保存は行いません。", "Link-based integration only. No Google account connection or automatic email/file access or saving.", "링크 연동 전용입니다. Google 계정 연결이나 이메일·파일 자동 읽기 및 저장은 하지 않습니다."),
+    "gmail-share-title": marketText("Gmailで共有", "Share with Gmail", "Gmail로 공유"),
+    "gmail-share-help": marketText("投稿本文とリンクをメール作成画面に入れます。宛先の指定・内容の確認・送信は自分で行ってください。", "Open an email with the post text and link. Choose recipients, review, and send it yourself.", "게시물 내용과 링크를 이메일 작성 화면에 넣습니다. 받는 사람 지정, 내용 확인, 전송은 직접 해 주세요."),
+    "gmail-subject-label": marketText("件名", "Subject", "제목"),
+    "gmail-body-label": marketText("共有する内容", "Shared content", "공유할 내용"),
+    "gmail-visibility-note": marketText("投稿はアカウント別に保存されているため、相手が投稿リンクを開けない場合があります。本文はメールでも共有されます。Googleファイルの閲覧には別途共有権限が必要です。", "Posts are saved per account, so recipients may not be able to view the post link. The email also includes its text. Google files still require sharing permission.", "게시물은 계정별로 저장되므로 상대방이 게시물 링크를 열지 못할 수 있습니다. 본문은 이메일에도 포함됩니다. Google 파일에는 별도의 공유 권한이 필요합니다."),
+    "gmail-compose-link": marketText("Gmailを開く", "Open Gmail", "Gmail 열기"),
+    "gmail-mailto-link": marketText("メールアプリを開く", "Open email app", "이메일 앱 열기"),
+    "google-copy-post-link": marketText("投稿リンクをコピー", "Copy post link", "게시물 링크 복사"),
+    "right-google-title": rightWidgetLabel("google"),
+  };
+  for (const [id, label] of Object.entries(labels)) $("#" + id).textContent = label;
+  $("#drawer-google span:last-child").textContent = rightWidgetLabel("google");
+  $("#add-google").title = marketText("Googleサービス・リンク添付", "Google services and file links", "Google 서비스 및 링크 첨부");
+  $("#add-google").setAttribute("aria-label", $("#add-google").title);
+  $("#google-file-title").placeholder = marketText("例：企画書", "e.g. Project proposal", "예: 기획서");
+  $("#google-service-grid").innerHTML = googleLauncherHTML();
+  $("#right-google").innerHTML = `<div class="google-service-grid compact">${googleLauncherHTML()}</div><button type="button" class="google-widget-attach" data-google-open>${marketText("リンクを投稿に添付", "Attach a link to a post", "게시물에 링크 첨부")}</button>`;
+  for (const id of ["close-google-dialog", "close-gmail-share"]) $("#" + id).setAttribute("aria-label", marketText("閉じる", "Close", "닫기"));
+  $("#google-share-post-url").setAttribute("aria-label", marketText("投稿リンク", "Post link", "게시물 링크"));
+  renderGooglePreview();
+}
+function openGoogleHub() {
+  if (!$("#drawer-overlay").hidden) setDrawer(false);
+  $("#google-link-error").textContent = "";
+  renderGoogleUI();
+  if (!$("#google-dialog").open) $("#google-dialog").showModal();
+  $("#google-file-url").focus();
+}
+function openGmailShare(post) {
+  const draft = GoogleServices.emailShare({ post, author: users.find((user) => user.id === post.u), baseUrl: location.href, language: lang });
+  renderGoogleUI();
+  $("#gmail-share-subject").value = draft.subject;
+  $("#gmail-share-body").value = draft.body;
+  $("#gmail-compose-link").href = draft.gmailUrl;
+  $("#gmail-mailto-link").href = draft.mailto;
+  $("#google-share-post-url").value = draft.link;
+  $("#google-share-post-url").hidden = true;
+  $("#google-copy-status").textContent = "";
+  $("#gmail-share-dialog").showModal();
+}
+$("#close-google-dialog").onclick = () => $("#google-dialog").close();
+$("#close-gmail-share").onclick = () => $("#gmail-share-dialog").close();
+$("#google-link-form").onsubmit = (event) => {
+  event.preventDefault();
+  const file = GoogleServices.parseFileLink($("#google-file-url").value, $("#google-file-title").value);
+  let error = "";
+  if (!file) error = marketText("Drive・Docs・Sheets・Slidesの有効なHTTPS共有リンクを入力してください。", "Enter a valid HTTPS sharing link from Drive, Docs, Sheets, or Slides.", "Drive, Docs, Sheets 또는 Slides의 올바른 HTTPS 공유 링크를 입력해 주세요.");
+  else if (composingGoogleFiles.some((item) => item.key === file.key)) error = marketText("このファイルは添付済みです。", "This file is already attached.", "이미 첨부된 파일입니다.");
+  else if (composingGoogleFiles.length >= GoogleServices.MAX_FILES) error = marketText("Googleのリンクは1投稿につき4件までです。", "You can attach up to 4 Google links per post.", "게시물당 Google 링크는 최대 4개입니다.");
+  $("#google-link-error").textContent = error;
+  if (error) return;
+  composingGoogleFiles.push(file);
+  $("#google-link-form").reset();
+  $("#google-dialog").close();
+  navigate("home");
+  renderGooglePreview();
+  updatePostButton();
+  $("#post-text").focus();
+  notify(marketText("Googleのリンクを添付しました", "Google link attached", "Google 링크를 첨부했습니다"));
+};
+$("#google-file-preview").onclick = (event) => {
+  const button = event.target.closest("[data-remove-google]");
+  if (!button) return;
+  composingGoogleFiles.splice(Number(button.dataset.removeGoogle), 1);
+  renderGooglePreview();
+  updatePostButton();
+};
+$("#google-copy-post-link").onclick = async () => {
+  try {
+    await navigator.clipboard.writeText($("#google-share-post-url").value);
+    $("#google-copy-status").textContent = marketText("投稿リンクをコピーしました。", "Post link copied.", "게시물 링크를 복사했습니다.");
+  } catch {
+    $("#google-share-post-url").hidden = false;
+    $("#google-share-post-url").select();
+    $("#google-copy-status").textContent = marketText("自動コピーが使えません。選択されたリンクを手動でコピーしてください。", "Automatic copy is unavailable. Copy the selected link manually.", "자동 복사를 사용할 수 없습니다. 선택된 링크를 직접 복사해 주세요.");
+  }
+};
 let serverReady = false,
   persistTimer,
   saveErrorShown = false;
@@ -687,7 +806,7 @@ async function loadServerState() {
     }
     serverReady = true;
     await loadSharedMarket();
-    render();
+    if (!restorePostRoute()) render();
     if (!state) persistState();
   } catch {
     notify(
@@ -733,6 +852,7 @@ function setDrawer(open) {
   else $("#open-drawer").focus();
 }
 function navigate(v, u = "you") {
+  if (v !== "post" && GoogleServices.postIdFromHash(location.hash)) history.replaceState({}, "", location.pathname + location.search);
   view = v;
   profileUser = u;
   render();
@@ -861,10 +981,23 @@ function openPostDetail(id) {
   if (!post) return;
   if (view !== "post") postReturnView = view;
   selectedPostId = post.id;
+  history.replaceState({}, "", GoogleServices.postUrl(location.href, post.id));
   view = "post";
   render();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
+function restorePostRoute() {
+  const id = GoogleServices.postIdFromHash(location.hash);
+  if (id === null) return false;
+  if (view !== "post") postReturnView = view;
+  selectedPostId = id;
+  view = "post";
+  render();
+  return true;
+}
+window.addEventListener("hashchange", () => {
+  if (serverReady && !restorePostRoute() && view === "post") navigate("home");
+});
 let lastScrollY = window.scrollY,
   scrollTicking = false;
 function updateBottomBar() {
@@ -893,6 +1026,7 @@ window.addEventListener(
 );
 window.addEventListener("resize", updateBottomBar);
 function applyLanguage() {
+  renderGoogleUI();
   document.documentElement.lang = lang;
   $("#drawer-title").textContent = marketText("メニュー", "Menu");
   $("#open-drawer").setAttribute("aria-label", marketText("メニューを開く", "Open menu"));
@@ -1614,6 +1748,7 @@ function render() {
   if (settings) {
     document.querySelector(".language-options")?.insertAdjacentHTML("beforeend", `<button data-language="ko" class="language-choice ${lang === "ko" ? "selected" : ""}" aria-pressed="${lang === "ko"}"><span>한</span><b>${tr("korean")}</b><small>한국어</small></button>`);
     $("#search-area").insertAdjacentHTML("beforeend", githubAccountHTML());
+    $("#search-area").insertAdjacentHTML("beforeend", googleSettingsHTML());
     $("#search-area").insertAdjacentHTML("beforeend", pwaGuideHTML());
     $("#search-area").insertAdjacentHTML("beforeend", teenSettingsHTML());
   }
@@ -1808,7 +1943,7 @@ function postHTML(p, detail = false) {
   const quoteImages =
     p.quoteOf?.images || (p.quoteOf?.image ? [p.quoteOf.image] : []);
   const question=p.qa?`<div class="post-question"><small>${marketText('質問箱への質問','Question box')}</small><p>${escape(p.qa.text)}</p><span>${p.qa.anonymous?marketText('匿名','Anonymous'):escape(p.qa.fromName || '')}</span></div>`:'';
-  return `<article class="post ${detail ? "post-detail" : ""}" id="post-${p.id}"${detail ? "" : ` data-open-post="${p.id}"`}><button data-person="${u.id}" aria-label="${u.name}のプロフィール" style="padding:0;align-self:flex-start">${avatar(u)}</button><div class="post-body"><div class="post-head"><button data-person="${u.id}" style="padding:0"><b>${u.name}</b></button>${u.id === "sota" ? '<span class="verified" aria-label="サンプル認証済み">✦</span>' : ""}${u.mbti ? `<span class="mbti-badge compact">${escape(u.mbti)}</span>` : ""}<span class="handle">@${u.handle}</span><button type="button" class="time post-detail-link" data-open-post="${p.id}" aria-label="${marketText("投稿詳細を表示", "View post details")}">· ${p.time}</button>${p.u === "you" ? `<button class="delete" data-action="delete" data-id="${p.id}">削除</button>` : ""}</div>${p.text ? `<p class="post-content">${escape(p.text).replace(/(#[^\s#]+)/g, '<span class="tag">$1</span>')}</p>` : ""}${question}${imageGridHTML(images)}${documentsHTML(p.documents)}${audioHTML(p.audio)}${videoHTML(p.video || p.youtubeId)}${stockPostCardHTML(p.stock)}${p.quoteOf ? `<div class="quote-card"><small>引用元 · ${users.find((u) => u.id === p.quoteOf.u)?.name || ""}</small>${p.quoteOf.text ? `<p>${escape(p.quoteOf.text)}</p>` : ""}${imageGridHTML(quoteImages, true)}${documentsHTML(p.quoteOf.documents)}${audioHTML(p.quoteOf.audio)}${videoHTML(p.quoteOf.video || p.quoteOf.youtubeId)}</div>` : ""}${pollHTML(p)}<div class="actions">${[
+  return `<article class="post ${detail ? "post-detail" : ""}" id="post-${p.id}"${detail ? "" : ` data-open-post="${p.id}"`}><button data-person="${u.id}" aria-label="${u.name}のプロフィール" style="padding:0;align-self:flex-start">${avatar(u)}</button><div class="post-body"><div class="post-head"><button data-person="${u.id}" style="padding:0"><b>${u.name}</b></button>${u.id === "sota" ? '<span class="verified" aria-label="サンプル認証済み">✦</span>' : ""}${u.mbti ? `<span class="mbti-badge compact">${escape(u.mbti)}</span>` : ""}<span class="handle">@${u.handle}</span><button type="button" class="time post-detail-link" data-open-post="${p.id}" aria-label="${marketText("投稿詳細を表示", "View post details")}">· ${p.time}</button>${p.u === "you" ? `<button class="delete" data-action="delete" data-id="${p.id}">削除</button>` : ""}</div>${p.text ? `<p class="post-content">${escape(p.text).replace(/(#[^\s#]+)/g, '<span class="tag">$1</span>')}</p>` : ""}${question}${imageGridHTML(images)}${documentsHTML(p.documents)}${googleFilesHTML(p.googleFiles)}${audioHTML(p.audio)}${videoHTML(p.video || p.youtubeId)}${stockPostCardHTML(p.stock)}${p.quoteOf ? `<div class="quote-card"><small>引用元 · ${users.find((u) => u.id === p.quoteOf.u)?.name || ""}</small>${p.quoteOf.text ? `<p>${escape(p.quoteOf.text)}</p>` : ""}${imageGridHTML(quoteImages, true)}${documentsHTML(p.quoteOf.documents)}${googleFilesHTML(p.quoteOf.googleFiles)}${audioHTML(p.quoteOf.audio)}${videoHTML(p.quoteOf.video || p.quoteOf.youtubeId)}</div>` : ""}${pollHTML(p)}<div class="actions">${[
     ["reply", tr("reply"), p.replies, ""],
     ["repeat", tr("repost"), p.reposts, p.reposted ? "reposted" : ""],
     ["heart", tr("like"), p.likes, p.liked ? "liked" : ""],
@@ -1837,10 +1972,12 @@ function createPost(
   stock = null,
   video = null,
   documents = [],
+  googleFiles = [],
 ) {
+  const normalizedGoogleFiles = GoogleServices.normalizeFiles(googleFiles);
   if (
     typeof text !== "string" ||
-    (!text.trim() && !images.length && !poll && !audio && !stock && !video && !documents.length) ||
+    (!text.trim() && !images.length && !poll && !audio && !stock && !video && !documents.length && !normalizedGoogleFiles.length) ||
     [...text].length > 200
   )
     throw Error("本文、画像、文書、投票、音声、シェア、動画のいずれかを追加してください。");
@@ -1860,6 +1997,7 @@ function createPost(
     stock,
     video,
     documents: documents.slice(0, 4),
+    googleFiles: normalizedGoogleFiles,
   };
   if (parent) {
     const original = posts.find((p) => p.id === parent);
@@ -1904,6 +2042,7 @@ function updatePostButton() {
       !composingImages.length &&
       !composingAudio &&
       !composingDocuments.length &&
+      !composingGoogleFiles.length &&
       !composingStock &&
       !composingYoutube &&
       !pollReady()) ||
@@ -2134,14 +2273,7 @@ $("#quote-picker-list").onclick = (event) => {
     (post) => post.id === Number(button.dataset.quoteSource),
   );
   if (!original) return;
-  composingQuote = {
-    u: original.u,
-    text: original.text,
-    images: original.images || [],
-    audio: original.audio || null,
-    documents: original.documents || [],
-    video: original.video || (original.youtubeId ? { provider: "youtube", id: original.youtubeId } : null),
-  };
+  composingQuote = quoteSnapshot(original);
   $("#quote-picker-dialog").close();
   updateQuoteComposer();
   $("#post-text").focus();
@@ -2503,18 +2635,20 @@ async function uploadDocuments(documents) {
   if (!response.ok) throw Error("document upload failed");
   return (await response.json()).documents || [];
 }
+function quoteSnapshot(post) {
+  return {
+    u: post.u,
+    text: post.text,
+    images: post.images || (post.image ? [post.image] : []),
+    audio: post.audio || null,
+    documents: post.documents || [],
+    googleFiles: GoogleServices.normalizeFiles(post.googleFiles),
+    video: post.video || (post.youtubeId ? { provider: "youtube", id: post.youtubeId } : null),
+  };
+}
 $("#post-form").onsubmit = async (e) => {
   e.preventDefault();
-  const quote = composingQuote
-    ? {
-        u: composingQuote.u,
-        text: composingQuote.text,
-        images: composingQuote.images || [],
-        audio: composingQuote.audio || null,
-        documents: composingQuote.documents || [],
-        video: composingQuote.video || null,
-      }
-    : null;
+  const quote = composingQuote ? quoteSnapshot(composingQuote) : null;
   const poll = $("#poll-builder").hidden
     ? null
     : {
@@ -2552,6 +2686,7 @@ $("#post-form").onsubmit = async (e) => {
     composingStock,
     composingYoutube,
     uploadedDocuments,
+    composingGoogleFiles,
   );
   $("#post-text").value = "";
   composingQuote = null;
@@ -2560,6 +2695,8 @@ $("#post-form").onsubmit = async (e) => {
   clearImages();
   clearAudio();
   clearDocuments();
+  composingGoogleFiles = [];
+  renderGooglePreview();
   updateYoutubePreview();
   clearPoll();
   updateQuoteComposer();
@@ -2801,6 +2938,10 @@ document.addEventListener("click", async (e) => {
   }
   const b = e.target.closest("button");
   if (!b) return;
+  if (b.hasAttribute("data-google-open")) {
+    openGoogleHub();
+    return;
+  }
   if (b.dataset.openList) {
     selectedListId = Number(b.dataset.openList);
     render();
@@ -2974,19 +3115,14 @@ document.addEventListener("click", async (e) => {
         );
         break;
       case "gmail": {
-        const author = users.find((user) => user.id === p.u);
-        const subject = marketText(`${author?.name || "yytblue"}さんの投稿`, `Post from ${author?.name || "yytblue"}`, `${author?.name || "yytblue"}님의 게시물`);
-        const postUrl = `${location.origin}${location.pathname}#post-${p.id}`;
-        const body = `${author?.name || ""} @${author?.handle || ""}\n\n${p.text || marketText("メディア付き投稿", "Media post", "미디어 게시물")}\n\n${postUrl}`;
-        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        const opened = window.open(gmailUrl, "_blank", "noopener,noreferrer");
-        if (!opened) location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        openGmailShare(p);
         return;
       }
       case "delete":
         if (confirm("このポストを削除しますか？")) {
           posts = posts.filter((x) => x.id !== p.id && x.parent !== p.id);
           if (view === "post" && selectedPostId === p.id) {
+            history.replaceState({}, "", location.pathname + location.search);
             selectedPostId = null;
             view = postReturnView === "post" ? "home" : postReturnView;
           }
@@ -3112,12 +3248,7 @@ document.addEventListener("click", (e) => {
   } else {
     const original = posts.find((x) => x.id === repostTo);
     if (!original) return;
-    composingQuote = {
-      u: original.u,
-      text: original.text,
-      images: original.images || (original.image ? [original.image] : []),
-      audio: original.audio || null,
-    };
+    composingQuote = quoteSnapshot(original);
     $("#repost-dialog").close();
     navigate("home");
     updateQuoteComposer();

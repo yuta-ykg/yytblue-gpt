@@ -1,9 +1,10 @@
-const CACHE = "yytblue-v27";
+const CACHE = "yytblue-v28";
 const APP_SHELL = [
   "/",
   "/blue.html",
   "/style.css",
   "/app.js",
+  "/google-services.js",
   "/games.js",
   "/creator-market.js",
   "/shared-market.js",

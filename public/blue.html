@@ -24,6 +24,7 @@
         <button type="button" class="drawer-account" data-person="you"><span class="avatar me">Y</span><span><b>あなた</b><small>@you</small></span></button>
         <nav id="drawer-nav" aria-label="ドロワーナビゲーション"></nav>
         <button type="button" class="drawer-shortcuts" id="open-shortcuts"><span aria-hidden="true">⌨</span><span>ショートカット</span></button>
+        <button type="button" class="drawer-shortcuts" id="drawer-google" data-google-open><span aria-hidden="true">G</span><span>Googleサービス</span></button>
         <button type="button" class="primary drawer-compose" id="drawer-compose">＋ <span>ポストする</span></button>
       </aside>
     </div>
@@ -91,6 +92,7 @@
             </div>
             <div id="youtube-preview" class="youtube-preview" hidden></div>
             <div id="document-preview" class="document-preview" hidden></div>
+            <div id="google-file-preview" class="google-file-list" hidden></div>
             <div id="image-preview" class="image-preview" hidden></div>
             <div id="audio-preview" class="audio-preview" hidden>
               <audio id="audio-preview-player" controls></audio>
@@ -148,6 +150,14 @@
                 aria-label="文書を作成"
               >
                 <span aria-hidden="true">▤</span><span id="create-document-label">文書</span></button
+              ><button
+                type="button"
+                class="poll-toggle google-toggle"
+                id="add-google"
+                data-google-open
+                title="Googleサービス・リンク添付"
+                aria-label="Googleサービス・リンク添付"
+              ><span aria-hidden="true">G</span></button
               ><button
                 type="button"
                 class="poll-toggle record-toggle"
@@ -223,6 +233,7 @@
         <section class="side-card right-widget right-feature-widget" data-right-widget="questions" hidden><h2 id="right-questions-title">質問箱</h2><div id="right-questions"></div></section>
         <section class="side-card right-widget right-feature-widget" data-right-widget="games" hidden><h2 id="right-games-title">ゲームルーム</h2><div id="right-games"></div></section>
         <section class="side-card right-widget right-feature-widget" data-right-widget="documents" hidden><h2 id="right-documents-title">文書ファイル作成</h2><div id="right-documents"></div></section>
+        <section class="side-card right-widget right-feature-widget" data-right-widget="google" hidden><h2 id="right-google-title">Googleサービス</h2><div id="right-google"></div></section>
         <p class="demo-foot">
           Blue · インタラクティブデモ<br />表示される人物・ポストはサンプルです。
         </p>
@@ -235,6 +246,34 @@
         <div id="right-widget-settings" class="right-widget-settings"></div>
         <div class="right-customize-actions"><button type="button" id="reset-right-widgets">初期状態に戻す</button><button class="primary" type="submit" id="save-right-widgets">完了</button></div>
       </form>
+    </dialog>
+    <dialog id="google-dialog" class="google-dialog" aria-labelledby="google-dialog-title" aria-describedby="google-dialog-help">
+      <div class="dialog-head"><h2 id="google-dialog-title">Googleサービス</h2><button type="button" id="close-google-dialog" aria-label="閉じる">×</button></div>
+      <p id="google-dialog-help">Googleサービスを開いたり、ファイルのリンクを投稿に添付できます。</p>
+      <div id="google-service-grid" class="google-service-grid"></div>
+      <form id="google-link-form">
+        <h3 id="google-link-heading">Googleのファイルを投稿に添付</h3>
+        <label for="google-file-url" id="google-url-label">共有リンク</label>
+        <input id="google-file-url" type="url" required maxlength="2048" placeholder="https://docs.google.com/document/d/…" aria-describedby="google-link-note google-link-error" autocomplete="off">
+        <label for="google-file-title" id="google-title-label">表示名（任意）</label>
+        <input id="google-file-title" type="text" maxlength="80" placeholder="例：企画書" autocomplete="off">
+        <p id="google-link-note" class="google-note">Drive・Docs・Sheets・Slidesの共有URLに対応。最大4件。リンク先の閲覧権限はGoogle側の設定のままです。</p>
+        <p id="google-link-error" class="form-error" role="alert"></p>
+        <button class="primary" id="google-link-add">リンクを添付</button>
+      </form>
+      <p id="google-connection-note" class="google-note google-connection-note">リンク連携のみ。Googleアカウントの接続や、メール・ファイルの自動読み込み／保存は行いません。</p>
+    </dialog>
+    <dialog id="gmail-share-dialog" class="google-dialog" aria-labelledby="gmail-share-title">
+      <div class="dialog-head"><h2 id="gmail-share-title">Gmailで共有</h2><button type="button" id="close-gmail-share" aria-label="閉じる">×</button></div>
+      <p id="gmail-share-help">投稿本文とリンクをメール作成画面に入れます。宛先の指定・内容の確認・送信は自分で行ってください。</p>
+      <label for="gmail-share-subject" id="gmail-subject-label">件名</label>
+      <input id="gmail-share-subject" readonly>
+      <label for="gmail-share-body" id="gmail-body-label">共有する内容</label>
+      <textarea id="gmail-share-body" readonly rows="7"></textarea>
+      <p id="gmail-visibility-note" class="google-note">投稿はアカウント別に保存されているため、相手が投稿リンクを開けない場合があります。本文はメールでも共有されます。Googleファイルの閲覧には別途共有権限が必要です。</p>
+      <div class="google-share-actions"><a id="gmail-compose-link" class="primary" target="_blank" rel="noopener noreferrer">Gmailを開く</a><a id="gmail-mailto-link">メールアプリを開く</a><button type="button" id="google-copy-post-link">投稿リンクをコピー</button></div>
+      <input id="google-share-post-url" class="field-input" readonly aria-label="投稿リンク" hidden>
+      <p id="google-copy-status" class="google-note" role="status"></p>
     </dialog>
     <dialog id="profile-dialog">
       <form id="profile-form">
@@ -428,6 +467,7 @@
     <div id="toast" role="status"></div>
     <script src="creator-market.js"></script>
     <script src="shared-market.js"></script>
+    <script src="google-services.js"></script>
     <script src="app.js"></script>
     <script src="games.js"></script>
     <script>
