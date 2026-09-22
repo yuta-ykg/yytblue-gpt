@@ -268,15 +268,16 @@ let likeIcon = (() => {
     return "heart";
   }
 })();
-const defaultRightWidgets = ["search", "welcome", "trends", "people"];
+const defaultRightWidgets = ["search", "welcome", "trends", "people", "shortcuts", "bookmarks", "questions", "games"];
+const initiallyVisibleRightWidgets = new Set(["search", "welcome", "trends", "people"]);
 let rightWidgets = (() => {
   try {
     const saved = JSON.parse(localStorage.getItem("blue-right-widgets") || "null");
-    if (!Array.isArray(saved)) return defaultRightWidgets.map((id) => ({ id, visible: true }));
+    if (!Array.isArray(saved)) return defaultRightWidgets.map((id) => ({ id, visible: initiallyVisibleRightWidgets.has(id) }));
     const valid = saved.filter((item) => defaultRightWidgets.includes(item?.id));
-    defaultRightWidgets.forEach((id) => { if (!valid.some((item) => item.id === id)) valid.push({ id, visible: true }); });
+    defaultRightWidgets.forEach((id) => { if (!valid.some((item) => item.id === id)) valid.push({ id, visible: initiallyVisibleRightWidgets.has(id) }); });
     return valid.map((item) => ({ id: item.id, visible: item.visible !== false }));
-  } catch { return defaultRightWidgets.map((id) => ({ id, visible: true })); }
+  } catch { return defaultRightWidgets.map((id) => ({ id, visible: initiallyVisibleRightWidgets.has(id) })); }
 })();
 function saveRightWidgets() {
   try { localStorage.setItem("blue-right-widgets", JSON.stringify(rightWidgets)); } catch {}
@@ -285,6 +286,8 @@ function rightWidgetLabel(id) {
   const labels = {
     search: ["検索", "Search", "검색"], welcome: ["ウェルカム", "Welcome", "환영"],
     trends: ["トレンド", "Trends", "트렌드"], people: ["おすすめユーザー", "Suggested users", "추천 사용자"],
+    shortcuts: ["ショートカット", "Shortcuts", "바로가기"], bookmarks: ["保存した投稿", "Saved posts", "저장한 게시물"],
+    questions: ["質問箱", "Questions", "질문함"], games: ["ゲームルーム", "Game rooms", "게임룸"],
   };
   return labels[id]?.[lang === "ja" ? 0 : lang === "ko" ? 2 : 1] || id;
 }
@@ -298,6 +301,22 @@ function applyRightWidgets() {
 }
 function renderRightWidgetSettings() {
   $("#right-widget-settings").innerHTML = rightWidgets.map((item, index) => `<div class="right-widget-setting"><input type="checkbox" data-right-visible="${item.id}" ${item.visible ? "checked" : ""} aria-label="${escape(rightWidgetLabel(item.id))}"><b>${escape(rightWidgetLabel(item.id))}</b><span class="right-widget-move"><button type="button" data-right-move="up" data-right-id="${item.id}" ${index === 0 ? "disabled" : ""} aria-label="${marketText("上へ移動", "Move up", "위로 이동")}">↑</button><button type="button" data-right-move="down" data-right-id="${item.id}" ${index === rightWidgets.length - 1 ? "disabled" : ""} aria-label="${marketText("下へ移動", "Move down", "아래로 이동")}">↓</button></span></div>`).join("");
+}
+function renderExtraRightWidgets() {
+  $("#right-shortcuts-title").textContent = rightWidgetLabel("shortcuts");
+  $("#right-bookmarks-title").textContent = rightWidgetLabel("bookmarks");
+  $("#right-questions-title").textContent = rightWidgetLabel("questions");
+  $("#right-games-title").textContent = rightWidgetLabel("games");
+  $("#right-shortcuts").innerHTML = [
+    ["lists", "lists", marketText("リスト", "Lists", "리스트")], ["market", "market", marketText("シェア市場", "Share market", "셰어 시장")],
+    ["diagnosis", "diagnosis", marketText("診断", "Self-check", "셀프 체크")], ["help", "help", marketText("ヘルプ", "Help", "도움말")],
+  ].map(([viewName, iconName, label]) => `<button type="button" data-view="${viewName}">${icon(iconName)}<span>${label}</span></button>`).join("");
+  const saved = posts.filter((post) => post.saved && !post.parent);
+  const latest = saved[0];
+  $("#right-bookmarks").innerHTML = `<div class="right-widget-summary"><div class="right-widget-count"><b>${saved.length}</b><small>${marketText("件保存", "saved", "개 저장")}</small></div>${latest ? `<div class="right-saved-preview"><b>${escape(users.find((user) => user.id === latest.u)?.name || "")}</b><p>${escape(latest.text || marketText("メディア投稿", "Media post", "미디어 게시물"))}</p></div>` : `<p>${marketText("保存した投稿はまだありません。", "No saved posts yet.", "저장한 게시물이 아직 없습니다.")}</p>`}<button type="button" data-view="bookmark">${marketText("ブックマークを開く", "Open bookmarks", "북마크 열기")}</button></div>`;
+  const unanswered = questions.filter((question) => question.to === "you" && !question.answer).length;
+  $("#right-questions").innerHTML = `<div class="right-widget-summary"><div class="right-widget-count"><b>${unanswered}</b><small>${marketText("件の未回答", "unanswered", "개 미답변")}</small></div><p>${marketText("質問の確認や回答、質問の送信ができます。", "Read, answer, or send questions.", "질문을 확인하고 답변하거나 보낼 수 있습니다.")}</p><button type="button" data-view="questions">${marketText("質問箱を開く", "Open questions", "질문함 열기")}</button></div>`;
+  $("#right-games").innerHTML = `<div class="right-widget-summary"><p>${marketText("オセロ、将棋、囲碁、チェス、テトリスなどで遊べます。", "Play Othello, Shogi, Go, Chess, Tetris, and more.", "오셀로, 쇼기, 바둑, 체스, 테트리스 등을 플레이할 수 있습니다.")}</p><button type="button" data-view="games">${marketText("ゲームを選ぶ", "Choose a game", "게임 선택")}</button></div>`;
 }
 let teenMode = (() => {
   try { return localStorage.getItem("blue-teen-mode") === "on"; } catch { return false; }
@@ -1645,6 +1664,7 @@ function render() {
         `<div class="person"><button data-person="${u.id}" aria-label="${u.name}">${avatar(u)}</button><span class="person-text"><b>${u.name}</b><small>@${u.handle}</small></span><button data-follow="${u.id}" class="follow ${following.has(u.id) ? "on" : ""}" aria-pressed="${following.has(u.id)}">${following.has(u.id) ? tr("followingBtn") : tr("follow")}</button></div>`,
     )
     .join("");
+  renderExtraRightWidgets();
   document.querySelectorAll("[data-tab]").forEach((b) => {
     b.classList.toggle("active", b.dataset.tab === tab);
     b.setAttribute("aria-pressed", b.dataset.tab === tab);
@@ -2684,7 +2704,7 @@ $("#right-widget-settings").onclick = (e) => {
   applyRightWidgets(); saveRightWidgets(); renderRightWidgetSettings();
 };
 $("#reset-right-widgets").onclick = () => {
-  rightWidgets = defaultRightWidgets.map((id) => ({ id, visible: true }));
+  rightWidgets = defaultRightWidgets.map((id) => ({ id, visible: initiallyVisibleRightWidgets.has(id) }));
   applyRightWidgets(); saveRightWidgets(); renderRightWidgetSettings();
 };
 document.addEventListener("submit", (e) => {
