@@ -268,6 +268,37 @@ let likeIcon = (() => {
     return "heart";
   }
 })();
+const defaultRightWidgets = ["search", "welcome", "trends", "people"];
+let rightWidgets = (() => {
+  try {
+    const saved = JSON.parse(localStorage.getItem("blue-right-widgets") || "null");
+    if (!Array.isArray(saved)) return defaultRightWidgets.map((id) => ({ id, visible: true }));
+    const valid = saved.filter((item) => defaultRightWidgets.includes(item?.id));
+    defaultRightWidgets.forEach((id) => { if (!valid.some((item) => item.id === id)) valid.push({ id, visible: true }); });
+    return valid.map((item) => ({ id: item.id, visible: item.visible !== false }));
+  } catch { return defaultRightWidgets.map((id) => ({ id, visible: true })); }
+})();
+function saveRightWidgets() {
+  try { localStorage.setItem("blue-right-widgets", JSON.stringify(rightWidgets)); } catch {}
+}
+function rightWidgetLabel(id) {
+  const labels = {
+    search: ["検索", "Search", "검색"], welcome: ["ウェルカム", "Welcome", "환영"],
+    trends: ["トレンド", "Trends", "트렌드"], people: ["おすすめユーザー", "Suggested users", "추천 사용자"],
+  };
+  return labels[id]?.[lang === "ja" ? 0 : lang === "ko" ? 2 : 1] || id;
+}
+function applyRightWidgets() {
+  rightWidgets.forEach((item, index) => {
+    const element = document.querySelector(`[data-right-widget="${item.id}"]`);
+    if (!element) return;
+    element.style.order = String(index);
+    element.hidden = !item.visible;
+  });
+}
+function renderRightWidgetSettings() {
+  $("#right-widget-settings").innerHTML = rightWidgets.map((item, index) => `<div class="right-widget-setting"><input type="checkbox" data-right-visible="${item.id}" ${item.visible ? "checked" : ""} aria-label="${escape(rightWidgetLabel(item.id))}"><b>${escape(rightWidgetLabel(item.id))}</b><span class="right-widget-move"><button type="button" data-right-move="up" data-right-id="${item.id}" ${index === 0 ? "disabled" : ""} aria-label="${marketText("上へ移動", "Move up", "위로 이동")}">↑</button><button type="button" data-right-move="down" data-right-id="${item.id}" ${index === rightWidgets.length - 1 ? "disabled" : ""} aria-label="${marketText("下へ移動", "Move down", "아래로 이동")}">↓</button></span></div>`).join("");
+}
 let teenMode = (() => {
   try { return localStorage.getItem("blue-teen-mode") === "on"; } catch { return false; }
 })();
@@ -956,6 +987,14 @@ function applyLanguage() {
   document.querySelectorAll(".side-card h2")[0].childNodes[0].textContent =
     tr("trends");
   document.querySelectorAll(".side-card h2")[1].textContent = tr("people");
+  $("#right-column-label").textContent = marketText("サイドバー", "Sidebar", "사이드바");
+  $("#customize-right").title = marketText("右側をカスタマイズ", "Customize sidebar", "사이드바 맞춤 설정");
+  $("#customize-right").setAttribute("aria-label", $("#customize-right").title);
+  $("#right-customize-title").textContent = $("#customize-right").title;
+  $("#right-customize-help").textContent = marketText("表示する項目と順番を選べます。", "Choose which widgets appear and their order.", "표시할 항목과 순서를 선택하세요.");
+  $("#reset-right-widgets").textContent = marketText("初期状態に戻す", "Reset", "초기화");
+  $("#save-right-widgets").textContent = marketText("完了", "Done", "완료");
+  renderRightWidgetSettings();
   document.querySelector(".compose-nav span").textContent = tr("compose");
   document
     .querySelector(".compose-nav")
@@ -2626,6 +2665,28 @@ $("#right-search").onsubmit = (e) => {
   query = new FormData(e.target).get("q").trim();
   navigate("search");
 };
+$("#right-settings-icon").innerHTML = icon("settings");
+$("#customize-right").onclick = () => { renderRightWidgetSettings(); $("#right-customize-dialog").showModal(); };
+$("#right-widget-settings").onchange = (e) => {
+  const input = e.target.closest("[data-right-visible]");
+  if (!input) return;
+  const item = rightWidgets.find((entry) => entry.id === input.dataset.rightVisible);
+  if (item) item.visible = input.checked;
+  applyRightWidgets(); saveRightWidgets();
+};
+$("#right-widget-settings").onclick = (e) => {
+  const button = e.target.closest("[data-right-move]");
+  if (!button) return;
+  const index = rightWidgets.findIndex((item) => item.id === button.dataset.rightId);
+  const target = index + (button.dataset.rightMove === "up" ? -1 : 1);
+  if (index < 0 || target < 0 || target >= rightWidgets.length) return;
+  [rightWidgets[index], rightWidgets[target]] = [rightWidgets[target], rightWidgets[index]];
+  applyRightWidgets(); saveRightWidgets(); renderRightWidgetSettings();
+};
+$("#reset-right-widgets").onclick = () => {
+  rightWidgets = defaultRightWidgets.map((id) => ({ id, visible: true }));
+  applyRightWidgets(); saveRightWidgets(); renderRightWidgetSettings();
+};
 document.addEventListener("submit", (e) => {
   if (e.target.id === "help-search") {
     e.preventDefault();
@@ -3076,6 +3137,7 @@ $("#reply-form").onsubmit = (e) => {
 };
 $("#close-dialog").onclick = () => $("#reply-dialog").close();
 $("#search-icon").innerHTML = icon("search");
+applyRightWidgets();
 $("#trends").innerHTML = [
   ["暮らし・日常", "#日々のこと", "1,284"],
   ["クリエイティブ", "#デザイン", "856"],

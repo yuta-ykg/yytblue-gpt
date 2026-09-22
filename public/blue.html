@@ -199,21 +199,22 @@
         </footer>
       </main>
       <aside class="right">
-        <form class="search-box" id="right-search">
+        <div class="right-head"><b id="right-column-label">サイドバー</b><button type="button" id="customize-right" aria-label="右側をカスタマイズ" title="右側をカスタマイズ"><span id="right-settings-icon"></span></button></div>
+        <form class="search-box right-widget" id="right-search" data-right-widget="search">
           <span id="search-icon"></span
           ><input name="q" aria-label="Blueを検索" placeholder="Blueを検索" />
         </form>
-        <section class="welcome">
+        <section class="welcome right-widget" data-right-widget="welcome">
           <span class="eyebrow">A LITTLE MORE CONNECTED</span>
           <h2>好きなことから、<br />つながろう。</h2>
           <p>何気ないひとことが、<br />新しい出会いのきっかけに。</p>
           <span class="welcome-mark">✳</span>
         </section>
-        <section class="side-card">
+        <section class="side-card right-widget" data-right-widget="trends">
           <h2>いま、話題のこと<span>↗</span></h2>
           <div id="trends"></div>
         </section>
-        <section class="side-card">
+        <section class="side-card right-widget" data-right-widget="people">
           <h2>気になる人を見つけよう</h2>
           <div id="people"></div>
         </section>
@@ -223,6 +224,13 @@
         <div class="copyright">© 2026 Blue</div>
       </aside>
     </div>
+    <dialog id="right-customize-dialog" class="right-customize-dialog">
+      <form method="dialog">
+        <div class="dialog-head"><div><h2 id="right-customize-title">右側をカスタマイズ</h2><p id="right-customize-help">表示する項目と順番を選べます。</p></div><button type="submit" aria-label="閉じる">×</button></div>
+        <div id="right-widget-settings" class="right-widget-settings"></div>
+        <div class="right-customize-actions"><button type="button" id="reset-right-widgets">初期状態に戻す</button><button class="primary" type="submit" id="save-right-widgets">完了</button></div>
+      </form>
+    </dialog>
     <dialog id="profile-dialog">
       <form id="profile-form">
         <div class="dialog-head">
