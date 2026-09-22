@@ -268,7 +268,7 @@ let likeIcon = (() => {
     return "heart";
   }
 })();
-const defaultRightWidgets = ["search", "welcome", "trends", "people", "shortcuts", "bookmarks", "questions", "games"];
+const defaultRightWidgets = ["search", "welcome", "trends", "people", "shortcuts", "bookmarks", "questions", "games", "documents"];
 const initiallyVisibleRightWidgets = new Set(["search", "welcome", "trends", "people"]);
 let rightWidgets = (() => {
   try {
@@ -288,6 +288,7 @@ function rightWidgetLabel(id) {
     trends: ["トレンド", "Trends", "트렌드"], people: ["おすすめユーザー", "Suggested users", "추천 사용자"],
     shortcuts: ["ショートカット", "Shortcuts", "바로가기"], bookmarks: ["保存した投稿", "Saved posts", "저장한 게시물"],
     questions: ["質問箱", "Questions", "질문함"], games: ["ゲームルーム", "Game rooms", "게임룸"],
+    documents: ["文書ファイル作成", "Create document", "문서 파일 만들기"],
   };
   return labels[id]?.[lang === "ja" ? 0 : lang === "ko" ? 2 : 1] || id;
 }
@@ -307,6 +308,7 @@ function renderExtraRightWidgets() {
   $("#right-bookmarks-title").textContent = rightWidgetLabel("bookmarks");
   $("#right-questions-title").textContent = rightWidgetLabel("questions");
   $("#right-games-title").textContent = rightWidgetLabel("games");
+  $("#right-documents-title").textContent = rightWidgetLabel("documents");
   $("#right-shortcuts").innerHTML = [
     ["lists", "lists", marketText("リスト", "Lists", "리스트")], ["market", "market", marketText("シェア市場", "Share market", "셰어 시장")],
     ["diagnosis", "diagnosis", marketText("診断", "Self-check", "셀프 체크")], ["help", "help", marketText("ヘルプ", "Help", "도움말")],
@@ -317,6 +319,8 @@ function renderExtraRightWidgets() {
   const unanswered = questions.filter((question) => question.to === "you" && !question.answer).length;
   $("#right-questions").innerHTML = `<div class="right-widget-summary"><div class="right-widget-count"><b>${unanswered}</b><small>${marketText("件の未回答", "unanswered", "개 미답변")}</small></div><p>${marketText("質問の確認や回答、質問の送信ができます。", "Read, answer, or send questions.", "질문을 확인하고 답변하거나 보낼 수 있습니다.")}</p><button type="button" data-view="questions">${marketText("質問箱を開く", "Open questions", "질문함 열기")}</button></div>`;
   $("#right-games").innerHTML = `<div class="right-widget-summary"><p>${marketText("オセロ、将棋、囲碁、チェス、テトリスなどで遊べます。", "Play Othello, Shogi, Go, Chess, Tetris, and more.", "오셀로, 쇼기, 바둑, 체스, 테트리스 등을 플레이할 수 있습니다.")}</p><button type="button" data-view="games">${marketText("ゲームを選ぶ", "Choose a game", "게임 선택")}</button></div>`;
+  $("#right-documents").innerHTML = `<div class="right-widget-summary"><p>${marketText("タイトルと本文を入力して、TXT・Markdown・RTF・CSV文書を作成できます。", "Create TXT, Markdown, RTF, or CSV documents from a title and body.", "제목과 본문을 입력해 TXT, Markdown, RTF 또는 CSV 문서를 만들 수 있습니다.")}</p><button type="button" id="right-create-document">${marketText("文書を作成", "Create document", "문서 만들기")}</button></div>`;
+  $("#right-create-document").onclick = () => $("#create-document").click();
 }
 let teenMode = (() => {
   try { return localStorage.getItem("blue-teen-mode") === "on"; } catch { return false; }
@@ -1809,10 +1813,11 @@ function postHTML(p, detail = false) {
     ["repeat", tr("repost"), p.reposts, p.reposted ? "reposted" : ""],
     ["heart", tr("like"), p.likes, p.liked ? "liked" : ""],
     ["bookmark", tr("save"), "", p.saved ? "saved" : ""],
+    ["gmail", marketText("Gmailで共有", "Share with Gmail", "Gmail로 공유"), "", ""],
   ]
     .map(
       ([a, label, count, c]) =>
-        `<button data-action="${a}" data-id="${p.id}" class="${c}" aria-label="${label}" ${a !== "reply" ? `aria-pressed="${!!c}"` : ""}>${icon(a === "heart" ? likeIcon : a)}<span>${count || ""}</span></button>`,
+        `<button data-action="${a}" data-id="${p.id}" class="${c}" aria-label="${label}" ${!["reply", "gmail"].includes(a) ? `aria-pressed="${!!c}"` : ""}>${icon(a === "heart" ? likeIcon : a === "gmail" ? "share" : a)}<span>${count || ""}</span></button>`,
     )
     .join("")}</div>${detail ? "" : posts
     .filter((r) => r.parent === p.id && !teenRestrictedPost(r))
@@ -2968,6 +2973,16 @@ document.addEventListener("click", async (e) => {
           p.saved ? "ブックマークに保存しました" : "ブックマークを解除しました",
         );
         break;
+      case "gmail": {
+        const author = users.find((user) => user.id === p.u);
+        const subject = marketText(`${author?.name || "yytblue"}さんの投稿`, `Post from ${author?.name || "yytblue"}`, `${author?.name || "yytblue"}님의 게시물`);
+        const postUrl = `${location.origin}${location.pathname}#post-${p.id}`;
+        const body = `${author?.name || ""} @${author?.handle || ""}\n\n${p.text || marketText("メディア付き投稿", "Media post", "미디어 게시물")}\n\n${postUrl}`;
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        const opened = window.open(gmailUrl, "_blank", "noopener,noreferrer");
+        if (!opened) location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        return;
+      }
       case "delete":
         if (confirm("このポストを削除しますか？")) {
           posts = posts.filter((x) => x.id !== p.id && x.parent !== p.id);
