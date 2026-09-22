@@ -724,7 +724,7 @@ function helpCenterHTML() {
   const items = lang === "ja" ? [
     ["はじめに", "yytblueはどのようなサービスですか？", "投稿、画像・音声の共有、質問箱、ゲーム、交友関係などを楽しめるマイクロブログです。設定から言語や表示テーマも選べます。"],
     ["投稿", "ポスト、返信、リポスト、引用リポストの違いは？", "ポストは通常の投稿、返信は投稿への返答です。リポストは投稿を共有し、引用リポストでは自分のコメントを添えて共有できます。"],
-    ["ストーリーズ", "ストーリーはいつまで表示されますか？", "画像または短いメッセージを公開でき、24時間後に自動的に表示されなくなります。自分のストーリーは閲覧画面からいつでも削除できます。"],
+    ["ストーリーズ", "ストーリーはいつまで表示されますか？", "テキスト、画像、音声、文書を組み合わせて公開でき、24時間後に自動的に表示されなくなります。自分のストーリーは閲覧画面からいつでも削除できます。"],
     ["画像・音声・埋め込み", "画像、音声、動画やSNS投稿を追加できますか？", "画像は最大4枚、音声は録音または音声ファイルから1件追加できます。PDF、Word、Excel、PowerPointなどの文書は最大4件、1件10MBまで添付できます。YouTube、ニコニコ動画、Vimeo、Bilibiliの動画と、X、Blueskyの投稿はURLを入力すると投稿内に埋め込めます。音声はほかのファイルと同時には追加できません。"],
     ["PWA", "アプリとしてホーム画面に追加するには？", "設定の「yytblueをアプリとして使う」から案内を確認できます。対応ブラウザではインストールボタンを使えます。iPhoneではSafariの共有メニューから「ホーム画面に追加」を選択してください。"],
     ["アカウント", "プロフィールと公開範囲を変更するには？", "プロフィール画面で表示名、ユーザー名、自己紹介、MBTIを編集できます。設定ではアカウントを非公開に切り替えられます。ユーザー名は重複できません。"],
@@ -737,7 +737,7 @@ function helpCenterHTML() {
   ] : [
     ["Getting started", "What is yytblue?", "yytblue is a microblog for posts, image and audio sharing, questions, games, and personal relationships. You can also choose a language and theme in Settings."],
     ["Posting", "How do posts, replies, reposts, and quote reposts differ?", "A post is a regular update. A reply responds to a post. A repost shares it, while a quote repost shares it with your own comment."],
-    ["Stories", "How long does a story remain visible?", "Share an image or short message for 24 hours. You can delete your own story at any time from the story viewer."],
+    ["Stories", "How long does a story remain visible?", "Share text, an image, audio, and documents in a story for 24 hours. You can delete your own story at any time from the story viewer."],
     ["Media", "Can I post images, audio, videos, or social posts?", "You can add up to four images, one audio recording or audio file, up to four PDF, Word, Excel, PowerPoint, or other supported documents of 10 MB each, or embed YouTube, Niconico, Vimeo, and Bilibili videos and X or Bluesky posts by entering their URL. Audio cannot be combined with other files."],
     ["PWA", "How do I add yytblue to my home screen?", "See the guide under Use yytblue as an app in Settings. On supported browsers, use Install app. On iPhone, use Safari Share, then Add to Home Screen."],
     ["Account", "How do I change my profile or privacy?", "Edit your name, username, bio, and MBTI from Profile. Set your account to private in Settings. Usernames must be unique."],
@@ -916,8 +916,10 @@ function applyLanguage() {
   $("#youtube-add-button").textContent = marketText("追加する", "Add embed");
   $("#stories").setAttribute("aria-label", marketText("ストーリーズ", "Stories"));
   $("#story-create-title").textContent = marketText("ストーリーを作成", "Create story");
-  $("#story-create-help").textContent = marketText("24時間表示されます。画像またはメッセージを追加してください。", "Visible for 24 hours. Add an image or message.");
-  $("#story-image-label").textContent = marketText("画像を選択", "Choose image");
+  $("#story-create-help").textContent = marketText("24時間表示されます。テキスト、画像、音声、文書を追加できます。", "Visible for 24 hours. Add text, an image, audio, or documents.");
+  $("#story-image-label").textContent = marketText("画像", "Image");
+  $("#story-audio-label").textContent = marketText("音声", "Audio");
+  $("#story-document-label").textContent = marketText("文書", "Documents");
   $("#story-text-label").textContent = marketText("メッセージ", "Message");
   $("#story-text").placeholder = marketText("ストーリーにひとこと", "Add a message to your story");
   $("#story-publish-button").textContent = marketText("公開する", "Publish");
@@ -1146,7 +1148,7 @@ function searchSafetyHTML(value) {
 }
 let creatorMarket = CreatorMarket.initial();
 const koPhrases = {
-  "ストーリーを作成": "스토리 만들기", "24時間表示されます。画像またはメッセージを追加してください。": "24시간 동안 표시됩니다. 이미지 또는 메시지를 추가하세요.", "画像を選択": "이미지 선택", "メッセージ": "메시지", "ストーリーにひとこと": "스토리에 메시지 추가", "公開する": "공개", "追加": "추가", "あなた": "나", "削除": "삭제", "ストーリーを削除しました": "스토리를 삭제했습니다", "ストーリーを公開しました": "스토리를 공개했습니다", "ストーリーを公開できませんでした": "스토리를 공개하지 못했습니다", "画像またはメッセージを追加してください": "이미지 또는 메시지를 추가하세요", "画像は8MB以下にしてください": "이미지는 8MB 이하여야 합니다",
+  "ストーリーを作成": "스토리 만들기", "24時間表示されます。テキスト、画像、音声、文書を追加できます。": "24시간 동안 표시됩니다. 텍스트, 이미지, 오디오 또는 문서를 추가할 수 있습니다.", "画像": "이미지", "音声": "오디오", "メッセージ": "메시지", "ストーリーにひとこと": "스토리에 메시지 추가", "公開する": "공개", "追加": "추가", "あなた": "나", "削除": "삭제", "ストーリーを削除しました": "스토리를 삭제했습니다", "ストーリーを公開しました": "스토리를 공개했습니다", "ストーリーを公開できませんでした": "스토리를 공개하지 못했습니다", "テキスト、画像、音声、文書のいずれかを追加してください": "텍스트, 이미지, 오디오 또는 문서 중 하나를 추가하세요", "画像は8MB以下にしてください": "이미지는 8MB 이하여야 합니다", "音声は15MB以下にしてください": "오디오는 15MB 이하여야 합니다", "文書は4件までです": "문서는 최대 4개까지 가능합니다", "文書は1件10MB以下にしてください": "문서 파일은 각각 10MB 이하여야 합니다",
   "公開範囲": "공개 범위", "全世界": "모두", "フォロワー": "팔로워", "親しい友達": "친한 친구", "◎ 全世界": "◎ 모두", "◉ フォロワー": "◉ 팔로워", "★ 親しい友達": "★ 친한 친구",
   "動画・SNS投稿のURLを追加": "동영상·SNS 게시물 URL 추가", "埋め込み": "임베드", "URLを埋め込む": "URL 임베드", "追加する": "추가", "文書": "문서", "文書を作成": "문서 만들기", "タイトル": "제목", "本文": "본문", "ファイル形式": "파일 형식", "作成して添付": "만들어서 첨부", "ショートカット": "단축키", "キーボードショートカット": "키보드 단축키", "初期設定に戻す": "기본값 복원", "メニューを閉じる": "메뉴 닫기", "閉じる": "닫기",
   "ログイン方法": "로그인 방법", "未ログイン": "로그인하지 않음", "ログアウト": "로그아웃", "GitHubでログイン": "GitHub로 로그인", "ChatGPTでログイン": "ChatGPT로 로그인", "アプリをインストール": "앱 설치", "この端末にインストール済みです": "이 기기에 설치됨", "ホーム画面への追加方法": "홈 화면에 추가하는 방법",
@@ -1623,7 +1625,8 @@ function renderStories() {
   const active = stories.filter((story) => story.createdAt > Date.now() - 86400000);
   $("#stories").innerHTML = `<button type="button" class="story-add" data-add-story><span class="story-ring"><span class="avatar me">Y</span><b>＋</b></span><small>${marketText("追加", "Add")}</small></button>${active.map((story) => {
     const user = users.find((item) => item.id === story.u) || users.find((item) => item.id === "you");
-    return `<button type="button" class="story-item" data-story-id="${story.id}"><span class="story-ring">${story.image ? `<img src="${escape(story.image)}" alt="">` : avatar(user)}</span><small>${escape(user.id === "you" ? marketText("あなた", "You") : user.name)}</small></button>`;
+    const preview = story.image ? `<img src="${escape(story.image)}" alt="">` : story.audio ? `<span class="story-media-icon" aria-hidden="true">♪</span>` : story.documents?.length ? `<span class="story-media-icon" aria-hidden="true">▤</span>` : avatar(user);
+    return `<button type="button" class="story-item" data-story-id="${story.id}"><span class="story-ring">${preview}</span><small>${escape(user.id === "you" ? marketText("あなた", "You") : user.name)}</small></button>`;
   }).join("")}`;
 }
 function openStory(story) {
@@ -1631,7 +1634,9 @@ function openStory(story) {
   const sequence = stories.filter((item) => item.createdAt > Date.now() - 86400000);
   const index = sequence.findIndex((item) => item.id === story.id);
   const user = users.find((item) => item.id === story.u) || users.find((item) => item.id === "you");
-  $("#story-viewer-content").innerHTML = `${story.image ? `<img src="${escape(story.image)}" alt="${escape(user.name)}のストーリー">` : `<div class="story-text-only">${escape(story.text || "✳")}</div>`}<div class="story-viewer-caption"><span>${avatar(user)}<b>${escape(user.name)}</b><small>${storyAge(story.createdAt)}</small></span><small class="story-visibility">${storyAudienceLabel(story.audience || "public")}</small>${story.image && story.text ? `<p>${escape(story.text)}</p>` : ""}${story.u === "you" ? `<button type="button" data-delete-story="${story.id}">${marketText("削除", "Delete")}</button>` : ""}</div>`;
+  const hasFiles = story.audio || story.documents?.length;
+  const stage = story.image ? `<img src="${escape(story.image)}" alt="${escape(user.name)}のストーリー">` : hasFiles ? `<div class="story-file-stage" aria-hidden="true">${story.audio ? "♪" : "▤"}</div>` : `<div class="story-text-only">${escape(story.text || "✳")}</div>`;
+  $("#story-viewer-content").innerHTML = `${stage}<div class="story-viewer-caption"><span>${avatar(user)}<b>${escape(user.name)}</b><small>${storyAge(story.createdAt)}</small></span><small class="story-visibility">${storyAudienceLabel(story.audience || "public")}</small>${(story.image || hasFiles) && story.text ? `<p>${escape(story.text)}</p>` : ""}${audioHTML(story.audio)}${documentsHTML(story.documents)}${story.u === "you" ? `<button type="button" data-delete-story="${story.id}">${marketText("削除", "Delete")}</button>` : ""}</div>`;
   $("#story-viewer .story-viewer-progress span").style.width = `${((index + 1) / sequence.length) * 100}%`;
   $("#story-prev").disabled = index <= 0;
   $("#story-next").disabled = index < 0;
@@ -2683,6 +2688,10 @@ document.addEventListener("click", async (e) => {
     $("#story-create-form").reset();
     $("#story-image-preview").hidden = true;
     $("#story-image-preview").innerHTML = "";
+    $("#story-audio-preview").hidden = true;
+    $("#story-audio-preview").innerHTML = "";
+    $("#story-document-preview").hidden = true;
+    $("#story-document-preview").innerHTML = "";
     $("#story-create-dialog").showModal();
     return;
   }
@@ -2918,12 +2927,31 @@ $("#story-image").onchange = (e) => {
   preview.hidden = false;
   preview.innerHTML = `<img src="${url}" alt="${marketText("ストーリー画像のプレビュー", "Story image preview")}">`;
 };
+$("#story-audio").onchange = (e) => {
+  const file = e.target.files?.[0];
+  const preview = $("#story-audio-preview");
+  if (!file) { preview.hidden = true; preview.innerHTML = ""; return; }
+  if (file.size > 15 * 1024 * 1024) { e.target.value = ""; preview.hidden = true; return notify(marketText("音声は15MB以下にしてください", "Choose audio up to 15 MB")); }
+  const url = URL.createObjectURL(file);
+  preview.hidden = false;
+  preview.innerHTML = `<audio controls preload="metadata" src="${url}"></audio><small>${escape(file.name)}</small>`;
+};
+$("#story-documents").onchange = (e) => {
+  const files = [...(e.target.files || [])];
+  const preview = $("#story-document-preview");
+  if (files.length > 4) { e.target.value = ""; preview.hidden = true; return notify(marketText("文書は4件までです", "Choose up to 4 documents")); }
+  if (files.some((file) => file.size > 10 * 1024 * 1024)) { e.target.value = ""; preview.hidden = true; return notify(marketText("文書は1件10MB以下にしてください", "Each document must be 10 MB or less")); }
+  preview.hidden = !files.length;
+  preview.innerHTML = files.map((file) => `<span><b>▤ ${escape(file.name)}</b><small>${formatFileSize(file.size)}</small></span>`).join("");
+};
 $("#story-create-form").onsubmit = async (e) => {
   e.preventDefault();
   const text = $("#story-text").value.trim();
   const file = $("#story-image").files?.[0];
+  const audioFile = $("#story-audio").files?.[0];
+  const documentFiles = [...($("#story-documents").files || [])];
   const audience = new FormData(e.currentTarget).get("audience") || "public";
-  if (!text && !file) return notify(marketText("画像またはメッセージを追加してください", "Add an image or message"));
+  if (!text && !file && !audioFile && !documentFiles.length) return notify(marketText("テキスト、画像、音声、文書のいずれかを追加してください", "Add text, an image, audio, or a document"));
   e.submitter.disabled = true;
   try {
     let image = null;
@@ -2933,7 +2961,9 @@ $("#story-create-form").onsubmit = async (e) => {
       if (!response.ok) throw Error("upload");
       image = (await response.json()).urls?.[0] || null;
     }
-    stories.unshift({ id: Date.now(), u: "you", text, image, audience, createdAt: Date.now() });
+    const audio = await uploadAudio(audioFile ? { file: audioFile } : null);
+    const documents = await uploadDocuments(documentFiles);
+    stories.unshift({ id: Date.now(), u: "you", text, image, audio, documents, audience, createdAt: Date.now() });
     $("#story-create-dialog").close(); persistState(); render(); notify(marketText("ストーリーを公開しました", "Story published"));
   } catch { notify(marketText("ストーリーを公開できませんでした", "Could not publish story")); }
   finally { e.submitter.disabled = false; }
