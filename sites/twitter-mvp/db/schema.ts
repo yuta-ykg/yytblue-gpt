@@ -1,0 +1,4 @@
+import { integer, sqliteTable, text, primaryKey, index } from "drizzle-orm/sqlite-core";
+export const users = sqliteTable("users", { id:text("id").primaryKey(), name:text("name").notNull(), handle:text("handle").notNull().unique(), bio:text("bio").notNull().default(""), createdAt:integer("created_at").notNull() });
+export const posts = sqliteTable("posts", { id:text("id").primaryKey(), authorId:text("author_id").notNull().references(()=>users.id), body:text("body").notNull(), createdAt:integer("created_at").notNull() }, t=>[index("idx_posts_author_created").on(t.authorId,t.createdAt)]);
+export const follows = sqliteTable("follows", { followerId:text("follower_id").notNull().references(()=>users.id), followingId:text("following_id").notNull().references(()=>users.id) }, t=>[primaryKey({columns:[t.followerId,t.followingId]}),index("idx_follows_following").on(t.followingId)]);
